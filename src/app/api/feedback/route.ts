@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import { addFeedback, getDefaultHousehold, listFeedback, track } from '@/lib/store';
+import { addFeedback, listFeedback, track } from '@/lib/store';
+import { resolveHousehold } from '@/lib/auth';
 
 // In-app feedback channel — beta users' reports of wrong extraction are the
 // training data (P0 gap the plan missed).
 export async function POST(req: Request) {
-  const hh = getDefaultHousehold();
+  const hh = resolveHousehold();
   const body = await req.json().catch(() => ({}));
   const message = String(body.message ?? '').trim();
   const kind = body.kind === 'wrong_extraction' ? 'wrong_extraction' : 'general';

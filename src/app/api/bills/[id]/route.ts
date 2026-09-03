@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { deleteBill, getBill, getDefaultHousehold, regenerateDigest, track, updateBill } from '@/lib/store';
+import { deleteBill, getBill, regenerateDigest, track, updateBill } from '@/lib/store';
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const bill = getBill(params.id);
@@ -15,7 +15,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   const updated = updateBill(params.id, patch);
-  regenerateDigest(getDefaultHousehold().id);
+  regenerateDigest(bill.householdId);
   track('bill_confirmed', bill.householdId, { billId: bill.id, confirmed: patch.confirmed });
   return NextResponse.json({ ok: true, bill: updated });
 }
@@ -24,7 +24,7 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   const bill = getBill(params.id);
   if (!bill) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   deleteBill(params.id);
-  regenerateDigest(getDefaultHousehold().id);
+  regenerateDigest(bill.householdId);
   track('bill_deleted', bill.householdId, { billId: bill.id });
   return NextResponse.json({ ok: true });
 }

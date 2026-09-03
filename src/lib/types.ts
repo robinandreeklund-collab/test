@@ -28,6 +28,8 @@ export interface Household {
   id: string;
   ownerName: string;
   email: string;
+  // "salt:scryptHex". Absent on the seeded demo household (which has no password).
+  passwordHash?: string;
   market: Market;
   currency: Currency;
   // IANA timezone, e.g. "Europe/London" or "Europe/Stockholm".

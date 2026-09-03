@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getDefaultHousehold, getTodayDigest, markDigestOpened, regenerateDigest, track } from '@/lib/store';
+import { getTodayDigest, markDigestOpened, regenerateDigest, track } from '@/lib/store';
+import { resolveHousehold } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
-  const hh = getDefaultHousehold();
+  const hh = resolveHousehold();
   let digest = getTodayDigest(hh.id);
   if (!digest) digest = regenerateDigest(hh.id);
 

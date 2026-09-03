@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getDefaultHousehold, getTodayDigest, logAction, track } from '@/lib/store';
+import { getTodayDigest, logAction, track } from '@/lib/store';
+import { resolveHousehold } from '@/lib/auth';
 import type { DigestItem } from '@/lib/types';
 
 // The approve-to-execute loop. Every external action is gated by this explicit
 // call and written to the action log (what, when, outcome).
 export async function POST(req: Request) {
-  const hh = getDefaultHousehold();
+  const hh = resolveHousehold();
   const body = await req.json().catch(() => ({}));
   const itemId = String(body.itemId ?? '');
   const action = body.action as 'approve' | 'done' | 'dismiss';

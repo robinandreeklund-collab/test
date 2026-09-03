@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
-import { addBill, getDefaultHousehold, listBills, regenerateDigest, track } from '@/lib/store';
+import { addBill, listBills, regenerateDigest, track } from '@/lib/store';
+import { resolveHousehold } from '@/lib/auth';
 import type { BillType } from '@/lib/types';
+
+export const dynamic = 'force-dynamic';
 
 const BILL_TYPES: BillType[] = ['broadband', 'energy', 'mobile', 'tv', 'insurance', 'other'];
 
 export async function GET() {
-  const hh = getDefaultHousehold();
+  const hh = resolveHousehold();
   const bills = listBills(hh.id);
   const total = bills
     .filter((b) => b.confirmed && b.amount !== null)
@@ -15,7 +18,7 @@ export async function GET() {
 
 // Manual add bill — P0 in this build (the plan had it as P1; see docs/DECISIONS.md).
 export async function POST(req: Request) {
-  const hh = getDefaultHousehold();
+  const hh = resolveHousehold();
   const body = await req.json().catch(() => ({}));
 
   const provider = String(body.provider ?? '').trim();

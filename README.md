@@ -39,6 +39,22 @@ npm run dev
 No environment variables are needed for the test build. `.env.example` lists the
 ones you'll add later (Anthropic, Supabase).
 
+## Logging in
+
+The build now has a real **sign-up / log-in** with sessions:
+
+- **`/signup`** — create an account (name, email, password). You get your own
+  fresh household (seeded with a couple of example "found" bills) and land in
+  onboarding.
+- **`/login`** — log back into that account, or hit **"Just show me the demo"**
+  to explore the ready-made demo household with no account.
+- The landing page has a **Log in** link and an **or try the demo** shortcut.
+- Log out from **Settings**. Sessions are a signed cookie; passwords are scrypt-
+  hashed in the in-memory store (production swaps this for Supabase Auth).
+
+> It's a test build: accounts live in memory and reset on redeploy. No email
+> verification, no password reset — those come with the real auth backend.
+
 ## What to try
 
 - **Landing** (`/`) — the two-step waitlist (household vs. company).

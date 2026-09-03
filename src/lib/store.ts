@@ -172,6 +172,80 @@ export function getDefaultHousehold(): Household {
   return getDB().households[0];
 }
 
+export function getHouseholdById(id: string): Household | undefined {
+  return getDB().households.find((h) => h.id === id);
+}
+
+export function findHouseholdByEmail(email: string): Household | undefined {
+  const e = email.trim().toLowerCase();
+  return getDB().households.find((h) => h.email.toLowerCase() === e);
+}
+
+// Create a brand-new household on sign-up. Seeds a couple of "found" (extracted,
+// unconfirmed) example bills so the bills-found onboarding screen has something
+// to confirm, plus today's digest.
+export function createHousehold(input: {
+  ownerName: string;
+  email: string;
+  passwordHash: string;
+}): Household {
+  const db = getDB();
+  const hid = id('hh');
+  const localPart = input.email.split('@')[0].replace(/[^a-z0-9]/gi, '.').toLowerCase();
+  const household: Household = {
+    id: hid,
+    ownerName: input.ownerName || 'there',
+    email: input.email.trim(),
+    passwordHash: input.passwordHash,
+    market: 'uk',
+    currency: 'GBP',
+    timezone: 'Europe/London',
+    adults: '2',
+    children: '1-2',
+    postcode: '',
+    forwardingAddress: `${localPart}@in.getgigiapp.com`,
+    connectionStatus: 'pending',
+    digestTime: '07:00',
+    digestPaused: false,
+    createdAt: iso(),
+  };
+  db.households.push(household);
+
+  // A couple of example "found" bills to make onboarding feel alive.
+  db.bills.push(
+    {
+      id: id('bill'),
+      householdId: hid,
+      provider: 'Virgin Media',
+      type: 'broadband',
+      amount: 59,
+      currency: 'GBP',
+      renewalDate: isoDate(18),
+      priceIncreaseFlag: true,
+      source: 'extracted',
+      confirmed: false,
+      createdAt: iso(),
+    },
+    {
+      id: id('bill'),
+      householdId: hid,
+      provider: 'British Gas',
+      type: 'energy',
+      amount: null, // null over guessing — user confirms
+      currency: 'GBP',
+      renewalDate: isoDate(40),
+      priceIncreaseFlag: false,
+      source: 'extracted',
+      confirmed: false,
+      createdAt: iso(),
+    },
+  );
+
+  db.digests.push(buildDigest(household, listBills(hid), []));
+  db.events.push({ id: id('evt'), householdId: hid, name: 'household_created', props: {}, createdAt: iso() });
+  return household;
+}
+
 export function updateHousehold(id: string, patch: Partial<Household>): Household | undefined {
   const db = getDB();
   const h = db.households.find((x) => x.id === id);

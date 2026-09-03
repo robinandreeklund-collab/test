@@ -1,20 +1,30 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { trackClient } from '@/lib/analytics';
 import type { Household } from '@/lib/types';
 
 export default function Settings() {
+  const router = useRouter();
   const [hh, setHh] = useState<Household | null>(null);
+  const [me, setMe] = useState<{ loggedIn: boolean; isDemo: boolean } | null>(null);
   const [toast, setToast] = useState('');
   const [feedback, setFeedback] = useState('');
 
   async function load() {
     const j = await fetch('/api/household').then((r) => r.json());
     setHh(j.household);
+    fetch('/api/auth/me').then((r) => r.json()).then(setMe).catch(() => {});
   }
   useEffect(() => { load(); trackClient('settings_viewed'); }, []);
+
+  async function logout() {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    trackClient('logout');
+    router.push('/');
+  }
 
   async function patch(body: Record<string, unknown>) {
     const j = await fetch('/api/household', {
@@ -32,6 +42,24 @@ export default function Settings() {
   return (
     <div className="screen">
       <h1>Settings</h1>
+
+      <section className="card stack">
+        <h3>Account</h3>
+        <div className="row between">
+          <div>
+            <div className="small" style={{ fontWeight: 600 }}>{hh.ownerName}</div>
+            <span className="tiny muted">{hh.email}</span>
+          </div>
+          {me?.isDemo && <span className="pill accent">Demo</span>}
+        </div>
+        {me?.isDemo ? (
+          <Link href="/signup" className="btn btn-primary btn-sm" style={{ width: '100%' }}>
+            Create your own account →
+          </Link>
+        ) : (
+          <button className="btn btn-ghost btn-sm" style={{ width: '100%' }} onClick={logout}>Log out</button>
+        )}
+      </section>
 
       <section className="card stack">
         <h3>Connected inbox</h3>

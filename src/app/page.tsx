@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { trackClient } from '@/lib/analytics';
 
@@ -31,6 +32,7 @@ function Header() {
         <a href="#faq">FAQ</a>
       </nav>
       <div className="spacer" />
+      <Link href="/login" style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink-soft)', marginRight: 8 }}>Log in</Link>
       <a href="#waitlist" className="btn btn-black btn-sm" style={{ padding: '10px 18px' }}>
         Join the waitlist →
       </a>
@@ -39,6 +41,12 @@ function Header() {
 }
 
 function Hero() {
+  const router = useRouter();
+  async function tryDemo() {
+    await fetch('/api/auth/demo', { method: 'POST' });
+    trackClient('demo_started', { where: 'hero' });
+    router.push('/app/digest');
+  }
   return (
     <section className="container hero">
       <div>
@@ -53,9 +61,9 @@ function Hero() {
           <a href="#waitlist" className="btn btn-black btn-wide" style={{ width: 'auto' }}>
             Join the waitlist →
           </a>
-          <Link href="/onboarding" className="link" style={{ fontSize: 15 }}>
+          <button onClick={tryDemo} className="link" style={{ fontSize: 15, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             or try the demo
-          </Link>
+          </button>
         </div>
         <div className="hero-cta-row" style={{ marginTop: 20 }}>
           <div className="avatars">
