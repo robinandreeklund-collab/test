@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import PhoneFrame from '@/components/PhoneFrame';
 
 export const metadata = { title: 'GiGi — Privacy' };
 
 export default function Privacy() {
   return (
+    <PhoneFrame>
     <div className="screen pad-bottom-sm">
       <div className="row between" style={{ marginBottom: 20 }}>
         <span className="wordmark" style={{ fontSize: 20 }}>GiGi</span>
@@ -40,6 +42,7 @@ export default function Privacy() {
         Questions? privacy@getgigiapp.com
       </p>
     </div>
+    </PhoneFrame>
   );
 }
 

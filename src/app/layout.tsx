@@ -17,11 +17,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <div className="viewport">
-          <div className="phone">{children}</div>
-        </div>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

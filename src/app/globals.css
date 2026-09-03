@@ -5,28 +5,32 @@
    brand/design once the design image lands is a single-file change.
    ========================================================================= */
 :root {
-  --paper: #faf6f0;
+  --paper: #f1ede4;        /* warm cream ground */
   --surface: #ffffff;
-  --surface-2: #f5efe7;
-  --ink: #26221e;
-  --ink-soft: #5c544c;
-  --muted: #948a80;
-  --border: #ebe3d8;
-  --border-strong: #ddd2c3;
+  --surface-2: #f3eee5;
+  --ink: #1c1b19;          /* near-black */
+  --ink-soft: #4c4842;
+  --muted: #8f897d;
+  --border: #e5ddcf;
+  --border-strong: #d9cfbd;
+  --dot: rgba(28, 27, 25, 0.07); /* dot-grid */
 
-  --brand: #3f6152;        /* sage — GiGi's voice */
-  --brand-ink: #2c4539;
-  --brand-soft: #e9f0ec;
+  --black: #1c1b19;        /* primary marketing CTA */
+  --black-ink: #000000;
 
-  --accent: #b8794e;       /* warm sand — savings / value */
-  --accent-soft: #f6ebe0;
+  --brand: #3c5a47;        /* deep sage — GiGi's voice / approve actions */
+  --brand-ink: #2c4636;
+  --brand-soft: #e5ede7;
+
+  --accent: #9a6b3f;       /* muted bronze — savings / value */
+  --accent-soft: #f1e7da;
 
   --today: #c4573b;        /* urgency: today */
   --soon: #c89a3e;         /* urgency: soon */
   --upcoming: #6e8b7e;     /* urgency: upcoming */
 
   --danger: #b23b30;
-  --ok: #3f6152;
+  --ok: #3c5a47;
 
   --shadow: 0 1px 2px rgba(38, 34, 30, 0.04), 0 8px 24px rgba(38, 34, 30, 0.06);
   --shadow-sm: 0 1px 2px rgba(38, 34, 30, 0.06);
@@ -143,6 +147,8 @@ p { line-height: 1.5; color: var(--ink-soft); margin: 0 0 12px; }
 .btn:active { transform: translateY(1px); }
 .btn-primary { background: var(--brand); color: #fff; }
 .btn-primary:hover { background: var(--brand-ink); }
+.btn-black { background: var(--black); color: #fff; }
+.btn-black:hover { background: var(--black-ink); }
 .btn-accent { background: var(--accent); color: #fff; }
 .btn-ghost { background: transparent; color: var(--ink); border-color: var(--border-strong); }
 .btn-ghost:hover { background: var(--surface-2); }
@@ -250,3 +256,133 @@ textarea { min-height: 92px; resize: vertical; }
   box-shadow: var(--shadow); animation: rise 0.2s ease;
 }
 @keyframes rise { from { opacity: 0; transform: translateY(8px);} to {opacity:1; transform:none;} }
+
+/* =========================================================================
+   Marketing landing (full web page — not inside the phone frame)
+   Matches the GiGi brand: cream + dot grid, black CTAs, sage accents,
+   serif display headline with a sage italic accent word.
+   ========================================================================= */
+.site {
+  min-height: 100dvh;
+  background-color: var(--paper);
+  background-image: radial-gradient(var(--dot) 1.1px, transparent 1.1px);
+  background-size: 24px 24px;
+  background-position: -12px -12px;
+  color: var(--ink);
+}
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 16px clamp(20px, 5vw, 64px);
+  background: rgba(241, 237, 228, 0.82);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-mark {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: var(--black); color: #fff;
+  display: grid; place-items: center;
+  font-family: var(--font-display); font-weight: 600; font-size: 18px;
+}
+.logo-word { font-family: var(--font-display); font-weight: 600; font-size: 22px; letter-spacing: -0.02em; }
+.site-nav { display: flex; gap: 22px; margin-left: 12px; }
+.site-nav a { font-size: 14px; font-weight: 500; color: var(--ink-soft); }
+.site-nav a:hover { color: var(--ink); }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 64px); }
+.hero {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: clamp(24px, 5vw, 64px);
+  align-items: center;
+  padding: clamp(40px, 7vw, 96px) 0 clamp(48px, 8vw, 110px);
+}
+.hero-eyebrow {
+  display: inline-block;
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  border: 1px solid #d3e0d7;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 22px;
+}
+.hero h1 {
+  font-size: clamp(46px, 7vw, 84px);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  margin: 0 0 22px;
+}
+.hero h1 em { font-style: italic; color: var(--brand); }
+.hero-lead { font-size: clamp(16px, 1.5vw, 19px); max-width: 30em; color: var(--ink-soft); }
+.hero-cta-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 30px; }
+.avatars { display: flex; }
+.avatars span {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 2px solid var(--paper);
+  margin-left: -8px;
+  display: grid; place-items: center;
+  font-size: 10px; font-weight: 700; color: #fff;
+}
+.avatars span:first-child { margin-left: 0; }
+
+.btn-wide { width: auto; padding: 15px 26px; font-size: 16px; }
+
+/* Section blocks */
+.section { padding: clamp(40px, 6vw, 88px) 0; }
+.section-alt { background: rgba(255,255,255,0.5); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.section h2 { font-size: clamp(28px, 4vw, 44px); letter-spacing: -0.02em; margin-bottom: 12px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 32px; }
+.feature-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+.feature-card .glyph { font-size: 22px; }
+.feature-card h3 { font-size: 19px; margin: 14px 0 6px; }
+
+.faq-item { border-bottom: 1px solid var(--border); padding: 20px 0; }
+.faq-item h3 { font-size: 18px; margin-bottom: 6px; }
+
+.waitlist-wrap { max-width: 520px; margin: 0 auto; text-align: center; }
+.waitlist-card { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: clamp(22px, 3vw, 34px); box-shadow: var(--shadow); text-align: left; margin-top: 24px; }
+
+.site-footer { padding: 40px 0; border-top: 1px solid var(--border); color: var(--muted); }
+
+/* --- Hero phone mockup (scaled, non-interactive replica) --- */
+.mock {
+  position: relative;
+  justify-self: center;
+  width: 300px;
+  filter: drop-shadow(0 30px 60px rgba(28,27,25,0.16));
+}
+.mock-phone {
+  background: #111; border-radius: 42px; padding: 11px;
+}
+.mock-screen {
+  background: var(--surface); border-radius: 32px; padding: 18px 15px; overflow: hidden;
+}
+.mock-float {
+  position: absolute; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 10px 13px; box-shadow: var(--shadow); font-size: 12px;
+}
+.mock-float .eyebrow { font-size: 9px; }
+.mock-float.tl { top: 34px; right: -46px; }
+.mock-float.bl { bottom: 70px; left: -54px; }
+
+.mockrow { display: flex; align-items: center; gap: 8px; }
+.mock-stat { flex: 1; border: 1px solid var(--border); border-radius: 10px; padding: 8px; text-align: center; }
+.mock-stat b { display: block; font-size: 15px; }
+.mock-stat span { font-size: 8px; color: var(--muted); }
+.mock-badge { font-size: 8px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 5px; }
+
+@media (max-width: 860px) {
+  .hero { grid-template-columns: 1fr; text-align: left; }
+  .grid-3 { grid-template-columns: 1fr; }
+  .site-nav { display: none; }
+  .mock { margin-top: 20px; }
+  .mock-float.tl { right: 8px; }
+  .mock-float.bl { left: 8px; }
+}

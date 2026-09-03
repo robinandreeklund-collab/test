@@ -5,6 +5,18 @@ four things, one-tap approvals. This repo is the **deploy-and-try** test build:
 the whole experience runs as a single Next.js app with seeded data and **no
 external services or API keys required to boot**.
 
+## Deploy in one click
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/robinandreeklund-collab/test/tree/claude/mvp-architecture-beta-plan-mqz8f0)
+
+The button reads [`render.yaml`](render.yaml) and provisions everything
+automatically — build, start, EU region, health check — with **no secrets to
+set**. Click it, approve the blueprint, and GiGi is live in a couple of minutes
+with the seeded demo household ready to try.
+
+> Once this branch is merged to `main`, drop the `/tree/...` suffix from the
+> button URL so it deploys from the default branch.
+
 > Design language note: the visual system (calm, warm, premium) is driven by
 > design tokens at the top of `src/app/globals.css`. Reskinning to the final
 > brand is a one-file change.
