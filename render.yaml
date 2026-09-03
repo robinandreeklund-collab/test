@@ -1,0 +1,26 @@
+# Render Blueprint — deploy GiGi beta test build with one click.
+# In Render: New + → Blueprint → point at this repo → Apply.
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: gigi-beta
+    runtime: node
+    plan: free
+    region: frankfurt # EU region — keeps "EU data only" true (docs/DECISIONS.md §4)
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/household
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: GIGI_DEFAULT_MARKET
+        value: uk
+      # Uncomment and set in the Render dashboard when you graduate off the
+      # in-memory store / add real AI extraction:
+      # - key: ANTHROPIC_API_KEY
+      #   sync: false
+      # - key: ANTHROPIC_REGION
+      #   value: eu
+      # - key: DATABASE_URL
+      #   sync: false

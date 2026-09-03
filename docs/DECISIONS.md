@@ -1,0 +1,71 @@
+# GiGi — build decisions (how the critique shaped this build)
+
+The original MVP doc was reviewed and a set of beta-blocking issues were raised.
+This build takes positions on them so the test version doesn't inherit the traps.
+Each item below is reflected in the code, not just noted.
+
+## The four things that could stop the beta
+
+### 1. Google OAuth is underestimated → **skip Gmail API in the beta**
+`gmail.readonly` is a *restricted* scope: CASA third-party security assessment
+on top of normal verification, realistically 6–10 weeks. Testing-mode refresh
+tokens also expire after 7 days with sensitive/restricted scopes — a nightly
+02:00 job would fail weekly per household.
+**Build choice:** no OAuth anywhere. The "Connect" step (`/onboarding/connect`)
+gives the user a **forward-to-GiGi address**; bills also enter via **manual add**.
+Zero OAuth, zero verification, off the critical path.
+
+### 2. Two markets in one 50-household beta → **single-market default**
+The bills vertical is UK-shaped (£, ICO, comparison platforms). Sweden is a
+different world (SEK, IMY, Konsumentverket).
+**Build choice:** market is a household field (`uk`/`se`) that drives currency
+and timezone, but the beta ships **UK-default** (`GIGI_DEFAULT_MARKET=uk`). Sweden
+is switchable for testing but is "market two," not run in parallel.
+
+### 3. Insurance switching is likely regulated → **no fee, no in-app execution**
+Arranging insurance for a fee looks like FCA-regulated insurance distribution.
+**Build choice:** `EXECUTABLE_BILL_TYPES = ['broadband','energy','mobile']`.
+Insurance surfaces as *"cheaper option found — here's the link"* with **no
+approve/execute button and no success fee**, pending legal review.
+
+### 4. DPIA missing + an EU-data contradiction → **stated, and inference pinned to EU**
+Processing family (incl. children's) email is high-risk under UK GDPR art. 35 —
+DPIA is mandatory. The doc also contradicts itself: "EU data only" vs. running
+the extraction prompt against a non-EU API.
+**Build choice:** the privacy page states EU/UK storage **and** EU-region
+inference; `ANTHROPIC_REGION=eu` is the documented default, and Render deploys to
+`frankfurt`. DPIA is called out in the privacy copy as a pre-onboarding gate.
+
+## Product-logic contradictions resolved
+
+- **Silent assistant can't build a habit** → **minimum mode.** A quiet day still
+  emits one line ("All calm today. Next: X in N days.") — see `digest.ts`.
+- **Open rate is gameable** → the digest carries a `delivered` flag so
+  *delivered-digest rate* can be measured alongside open rate.
+- **Max-4 vs. carry-forward** → the digest has an explicit **priority score**
+  (carried-forward items get a boost) and an **overflow surface** below the four,
+  so nothing disappears silently while the top stays ≤4.
+- **Success fee drives noise** → executable savings are ranked but never
+  fabricated; `estimateSaving` returns null below a floor so GiGi stays quiet
+  rather than inventing a switch to earn a fee.
+
+## P0 gaps that were closed
+
+- **Timezone** is in the household profile (needed for 02:00/07:00 jobs).
+- **Manual add-bill is P0**, present in onboarding *and* the bills register.
+- **Degraded states**: a dead connection / failed extraction shows as a plain
+  digest line and a settings banner — never silence. (Demo toggle in Settings.)
+- **Instrumentation from day one**: `analytics_events` + `/api/events`, fired on
+  every meaningful action, viewable at `/app/metrics`.
+- **In-app feedback channel**: per-item "⚑ report" and a settings form → training
+  data for extraction quality.
+
+## Still open (flagged, not silently dropped)
+
+- **Voice agent** ("Sign up + Voice agent" in §4.1) is undesigned — left out of
+  this build deliberately; needs a spec before it's P0.
+- **Calendar write-back** requires a second consent flow; out of this build.
+- **Extraction eval set** (≥95% precision target on amount/renewal) is a
+  data/ops task, not a screen — tracked as a launch gate, not built here.
+- **Founder capacity** (onboarding calls, concierge switches, invoicing) is the
+  real bottleneck and lives in ops, not this repo.
