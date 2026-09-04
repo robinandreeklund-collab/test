@@ -28,6 +28,16 @@ export default function Privacy() {
           We never send, delete or modify anything in a connected account. We never store
           information about other families&apos; children. Every external action waits for your tap.
         </Section>
+        <Section title="Not linked to you">
+          Your bills, digests and history are stored against a random id — not your name. The one
+          place your email and password live is a separate identity vault. So the sensitive data
+          can&apos;t be tied back to a person without that vault.
+        </Section>
+        <Section title="No trackers, no cookie banner">
+          One first-party, strictly-necessary session cookie — an opaque token, nothing else. No
+          analytics SDKs, no third-party fonts or CDNs, no tracking. You can even sign up without an
+          email and log in with a recovery code.
+        </Section>
         <Section title="Total transparency">
           Every household has a live, plain-language log of exactly what GiGi did with their data —
           every email received, every analysis, everywhere it went, with timestamps. It&apos;s

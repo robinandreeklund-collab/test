@@ -63,6 +63,14 @@ inference; `ANTHROPIC_REGION=eu` is the documented default, and Render deploys t
   record of everything done with the user's data — the data flow, never the
   content. Doubles as the GDPR record of processing and makes the EU-inference
   question visible rather than hidden. See `docs/DATA_TRUST.md`.
+- **Privacy architecture** (pseudonymity by design): strong identifiers (email,
+  password, recovery) live in a separate **identity vault** keyed by an opaque
+  `subjectId`; the content store (bills/digests/processing) is keyed by opaque
+  ids only, so a content dump isn't linkable to a person. Sessions are opaque
+  server-side tokens (the cookie holds no id/PII), first-party and strictly
+  necessary (no cookie banner); a strict CSP + zero third parties enforce no
+  tracking; text is PII-stripped before AI; accounts can be email-free with a
+  one-time recovery code. See `docs/PRIVACY_ARCHITECTURE.md`.
 - **Family accounts** (`/app/family`): the household is the shared unit; auth
   moved from household to **member**. Three login roles — owner (manages
   members), adult/co-parent (can approve + manage bills), teen (limited view:

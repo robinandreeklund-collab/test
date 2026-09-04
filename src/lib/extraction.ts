@@ -159,6 +159,20 @@ export function heuristicExtract(email: RawEmail): ExtractedBill {
   };
 }
 
+// Strip obvious personal identifiers before sending text to the AI. Bill facts
+// (provider, amount, dates) survive; names/emails/phones/addresses are masked.
+// Reduces what ever leaves for inference — see docs/PRIVACY_ARCHITECTURE.md.
+export function redactPII(text: string): string {
+  return text
+    .replace(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi, '[email]')
+    .replace(/\b(?:\+?\d[\d\s().-]{7,}\d)\b/g, '[phone]')
+    // UK postcodes
+    .replace(/\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/gi, '[postcode]')
+    // Long card/account-like digit runs
+    .replace(/\b\d{2}[- ]?\d{2}[- ]?\d{2}\b/g, '[sortcode]')
+    .replace(/\b\d{8,}\b/g, '[number]');
+}
+
 const EXTRACTION_SYSTEM = `You extract one household bill from a forwarded email into strict JSON.
 Rules:
 - Output ONLY a JSON object, no prose, no code fences.
@@ -186,7 +200,7 @@ async function anthropicExtract(email: RawEmail): Promise<ExtractedBill> {
     messages: [
       {
         role: 'user',
-        content: `From: ${email.from ?? ''}\nSubject: ${email.subject ?? ''}\n\n${email.text ?? ''}`,
+        content: redactPII(`From: ${email.from ?? ''}\nSubject: ${email.subject ?? ''}\n\n${email.text ?? ''}`),
       },
     ],
   };

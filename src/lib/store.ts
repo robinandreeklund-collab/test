@@ -16,11 +16,13 @@ import type {
   Digest,
   Feedback,
   Household,
+  Identity,
   Member,
   MemberRole,
   ProcessingAction,
   ProcessingActor,
   ProcessingEvent,
+  Session,
   WaitlistEntry,
 } from './types';
 import { buildDigest } from './digest';
@@ -28,6 +30,8 @@ import { buildDigest } from './digest';
 interface DB {
   households: Household[];
   members: Member[];
+  identities: Identity[]; // vault — strong identifiers, kept apart from content
+  sessions: Session[]; // opaque session tokens
   children: Child[];
   bills: Bill[];
   digests: Digest[];
@@ -150,12 +154,16 @@ function seed(): DB {
         id: 'mem_demo',
         householdId,
         name: 'Kerstin',
-        email: 'demo@getgigiapp.com',
         role: 'owner',
         status: 'active',
+        subjectId: 'subj_demo',
         createdAt: iso(-40),
       },
     ],
+    identities: [
+      { subjectId: 'subj_demo', email: 'demo@getgigiapp.com', createdAt: iso(-40) },
+    ],
+    sessions: [],
     children: [
       { id: 'child_demo', householdId, name: 'Ella', yearGroup: 'Year 4', passportExpiry: isoDate(300), createdAt: iso(-40) },
     ],
@@ -279,17 +287,18 @@ export function resolveInboundHousehold(recipient?: string, sender?: string): Ho
 // to confirm, plus today's digest.
 export function createHousehold(input: {
   ownerName: string;
-  email: string;
+  email?: string;
   passwordHash: string;
-}): Household {
+  recoveryHash: string;
+}): { household: Household; member: Member } {
   const db = getDB();
   const hid = id('hh');
-  const localPart = input.email.split('@')[0].replace(/[^a-z0-9]/gi, '.').toLowerCase();
+  const emailLocal = input.email ? input.email.split('@')[0] : id('gigi');
+  const localPart = emailLocal.replace(/[^a-z0-9]/gi, '.').toLowerCase();
   const household: Household = {
     id: hid,
     ownerName: input.ownerName || 'there',
-    email: input.email.trim(),
-    passwordHash: input.passwordHash,
+    email: input.email?.trim() ?? '',
     market: 'uk',
     currency: 'GBP',
     timezone: 'Europe/London',
@@ -334,17 +343,27 @@ export function createHousehold(input: {
     },
   );
 
-  // The owner is the first family member. Auth lives on the Member.
-  db.members.push({
+  // The owner is the first family member. Strong identifiers (email, password,
+  // recovery) live in the vault, keyed by an opaque subjectId — never on the
+  // member/content record.
+  const subjectId = id('subj');
+  db.identities.push({
+    subjectId,
+    email: input.email?.trim(),
+    passwordHash: input.passwordHash,
+    recoveryHash: input.recoveryHash,
+    createdAt: iso(),
+  });
+  const member: Member = {
     id: id('mem'),
     householdId: hid,
     name: household.ownerName,
-    email: household.email,
     role: 'owner',
     status: 'active',
-    passwordHash: input.passwordHash,
+    subjectId,
     createdAt: iso(),
-  });
+  };
+  db.members.push(member);
 
   db.digests.push(buildDigest(household, listBills(hid), []));
   db.events.push({ id: id('evt'), householdId: hid, name: 'household_created', props: {}, createdAt: iso() });
@@ -354,7 +373,46 @@ export function createHousehold(input: {
     'Set up your account',
     'Contract (providing the service)',
   );
-  return household;
+  return { household, member };
+}
+
+// --- Identity vault + sessions -----------------------------------------------
+
+export function getIdentity(subjectId: string): Identity | undefined {
+  return getDB().identities.find((i) => i.subjectId === subjectId);
+}
+
+export function findIdentityByEmail(email: string): Identity | undefined {
+  const e = email.trim().toLowerCase();
+  return getDB().identities.find((i) => i.email?.toLowerCase() === e);
+}
+
+export function findIdentityByRecoveryHash(recoveryHash: string): Identity | undefined {
+  return getDB().identities.find((i) => i.recoveryHash === recoveryHash);
+}
+
+export function memberForSubject(subjectId: string): Member | undefined {
+  return getDB().members.find((m) => m.subjectId === subjectId && m.status === 'active');
+}
+
+// Email + name for display, resolved from the vault. Used by the API layer only.
+export function displayFor(member: Member): { name: string; email?: string } {
+  return { name: member.name, email: getIdentity(member.subjectId)?.email };
+}
+
+export function createSession(memberId: string): string {
+  const token = id('sess') + id('tok') + id('r');
+  getDB().sessions.push({ token, memberId, createdAt: iso() });
+  return token;
+}
+
+export function memberIdForSession(token: string): string | undefined {
+  return getDB().sessions.find((s) => s.token === token)?.memberId;
+}
+
+export function deleteSession(token: string): void {
+  const db = getDB();
+  db.sessions = db.sessions.filter((s) => s.token !== token);
 }
 
 // --- Members (family accounts) -----------------------------------------------
@@ -368,8 +426,9 @@ export function getMemberById(memberId: string): Member | undefined {
 }
 
 export function findMemberByEmail(email: string): Member | undefined {
-  const e = email.trim().toLowerCase();
-  return getDB().members.find((m) => m.email.toLowerCase() === e && m.status === 'active');
+  const identity = findIdentityByEmail(email);
+  if (!identity) return undefined;
+  return memberForSubject(identity.subjectId);
 }
 
 export function ownerMember(householdId: string): Member | undefined {
@@ -377,18 +436,22 @@ export function ownerMember(householdId: string): Member | undefined {
 }
 
 // Invite a family member (adult co-parent or teen). Returns the invite token.
+// A pending identity holds the invited email until they accept.
 export function inviteMember(householdId: string, name: string, email: string, role: MemberRole): Member {
+  const db = getDB();
+  const subjectId = id('subj');
+  db.identities.push({ subjectId, email: email.trim(), createdAt: iso() });
   const member: Member = {
     id: id('mem'),
     householdId,
     name,
-    email: email.trim(),
     role: role === 'owner' ? 'adult' : role, // never invite a second owner
     status: 'invited',
+    subjectId,
     inviteToken: id('inv') + id('tok'),
     createdAt: iso(),
   };
-  getDB().members.push(member);
+  db.members.push(member);
   logProcessing(
     householdId, 'member_invited', 'account', 'you',
     `You invited ${name} to your household as ${member.role}`,
@@ -402,14 +465,18 @@ export function getMemberByInvite(token: string): Member | undefined {
   return getDB().members.find((m) => m.inviteToken === token && m.status === 'invited');
 }
 
-// Accept an invite: set name/password and activate.
-export function activateMember(token: string, name: string, passwordHash: string): Member | undefined {
+// Accept an invite: set name + auth secrets (in the vault) and activate.
+export function activateMember(token: string, name: string, passwordHash: string, recoveryHash: string): Member | undefined {
   const m = getMemberByInvite(token);
   if (!m) return undefined;
   m.name = name || m.name;
-  m.passwordHash = passwordHash;
   m.status = 'active';
   delete m.inviteToken;
+  const identity = getIdentity(m.subjectId);
+  if (identity) {
+    identity.passwordHash = passwordHash;
+    identity.recoveryHash = recoveryHash;
+  }
   logProcessing(
     m.householdId, 'member_joined', 'account', 'you',
     `${m.name} joined your household`,
@@ -424,6 +491,9 @@ export function removeMember(householdId: string, memberId: string): boolean {
   const m = db.members.find((x) => x.id === memberId && x.householdId === householdId);
   if (!m || m.role === 'owner') return false; // never remove the owner
   db.members = db.members.filter((x) => x.id !== memberId);
+  // Purge their identity and any live sessions.
+  db.identities = db.identities.filter((i) => i.subjectId !== m.subjectId);
+  db.sessions = db.sessions.filter((s) => s.memberId !== memberId);
   logProcessing(
     householdId, 'member_removed', 'account', 'you',
     `You removed ${m.name} from your household`,
@@ -658,9 +728,14 @@ export function deleteHouseholdData(householdId: string): void {
   db.actions = db.actions.filter((a) => a.householdId !== householdId);
   db.feedback = db.feedback.filter((f) => f.householdId !== householdId);
   db.children = db.children.filter((c) => c.householdId !== householdId);
-  // Remove invited/co-parent/teen members; keep the owner so their session
-  // survives into an empty account.
+  // Remove invited/co-parent/teen members (and their vault identities/sessions);
+  // keep the owner so their session survives into an empty account.
+  const removed = db.members.filter((m) => m.householdId === householdId && m.role !== 'owner');
+  const removedSubjects = new Set(removed.map((m) => m.subjectId));
+  const removedIds = new Set(removed.map((m) => m.id));
   db.members = db.members.filter((m) => m.householdId !== householdId || m.role === 'owner');
+  db.identities = db.identities.filter((i) => !removedSubjects.has(i.subjectId));
+  db.sessions = db.sessions.filter((s) => !removedIds.has(s.memberId));
   logProcessing(
     householdId,
     'data_deleted',

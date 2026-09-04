@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
-import { scryptSync, randomBytes, timingSafeEqual } from 'crypto';
-import { getDefaultHousehold, getHouseholdById, getMemberById, ownerMember } from './store';
+import { scryptSync, randomBytes, timingSafeEqual, createHash } from 'crypto';
+import { getDefaultHousehold, getHouseholdById, getMemberById, ownerMember, memberIdForSession } from './store';
 import type { Household, Member, MemberRole } from './types';
 
 export const SESSION_COOKIE = 'gigi_session';
@@ -30,13 +30,28 @@ export function verifyPassword(password: string, stored?: string): boolean {
   return candidate.length === expected.length && timingSafeEqual(candidate, expected);
 }
 
-// The session cookie now stores a MEMBER id. Resolve the current member (or the
-// demo owner as a fallback so /app demo links keep working without logging in).
+// One-time recovery code for email-free accounts. Shown once, stored only as a
+// hash. Format: GIGI-XXXX-XXXX-XXXX.
+export function generateRecoveryCode(): string {
+  const chunk = () => randomBytes(3).toString('hex').toUpperCase().slice(0, 4);
+  return `GIGI-${chunk()}-${chunk()}-${chunk()}`;
+}
+
+export function hashRecovery(code: string): string {
+  return createHash('sha256').update(code.trim().toUpperCase()).digest('hex');
+}
+
+// The session cookie holds an OPAQUE token (not the member id, no PII). Resolve
+// it server-side to the member (or the demo owner as a fallback so /app demo
+// links keep working without logging in).
 export function currentMember(): Member | null {
-  const id = cookies().get(SESSION_COOKIE)?.value;
-  if (id) {
-    const m = getMemberById(id);
-    if (m && m.status === 'active') return m;
+  const token = cookies().get(SESSION_COOKIE)?.value;
+  if (token) {
+    const memberId = memberIdForSession(token);
+    if (memberId) {
+      const m = getMemberById(memberId);
+      if (m && m.status === 'active') return m;
+    }
   }
   return null;
 }

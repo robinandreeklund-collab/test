@@ -12,6 +12,7 @@ export default function Join({ params }: { params: { token: string } }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [recovery, setRecovery] = useState('');
 
   useEffect(() => {
     fetch(`/api/members/join?token=${encodeURIComponent(params.token)}`)
@@ -35,8 +36,25 @@ export default function Join({ params }: { params: { token: string } }) {
       setError(j.error ?? 'Could not join.');
       return;
     }
+    const j = await res.json();
     trackClient('member_joined');
-    router.push('/app/digest');
+    setRecovery(j.recoveryCode ?? '');
+  }
+
+  if (recovery) {
+    return (
+      <PhoneFrame>
+        <div className="screen center">
+          <div style={{ fontSize: 34, marginTop: 12 }}>🔑</div>
+          <h1 style={{ marginTop: 10 }}>Save your recovery code</h1>
+          <p className="small">Keeps you able to get back in if you lose your password.</p>
+          <div className="card center"><code style={{ fontSize: 20, fontWeight: 700, letterSpacing: '0.04em' }}>{recovery}</code></div>
+          <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => router.push('/app/digest')}>
+            I&apos;ve saved it — continue
+          </button>
+        </div>
+      </PhoneFrame>
+    );
   }
 
   return (

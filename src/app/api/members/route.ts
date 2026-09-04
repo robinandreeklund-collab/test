@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { listMembers, listChildren, inviteMember, findMemberByEmail, track } from '@/lib/store';
+import { listMembers, listChildren, inviteMember, findMemberByEmail, displayFor, track } from '@/lib/store';
 import { resolveMember, can } from '@/lib/auth';
 import type { MemberRole } from '@/lib/types';
 
@@ -11,7 +11,7 @@ export async function GET() {
   const members = listMembers(me.householdId).map((m) => ({
     id: m.id,
     name: m.name,
-    email: m.email,
+    email: displayFor(m).email ?? null,
     role: m.role,
     status: m.status,
     isYou: m.id === me.id,

@@ -10,6 +10,8 @@ export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [recoveryCode, setRecoveryCode] = useState('');
+  const [useRecovery, setUseRecovery] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -19,7 +21,7 @@ export default function Login() {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(useRecovery ? { recoveryCode } : { email, password }),
     });
     setBusy(false);
     if (!res.ok) {
@@ -47,18 +49,31 @@ export default function Login() {
         </div>
 
         <div className="card stack">
-          <label className="field" style={{ marginBottom: 0 }}>
-            <span>Email</span>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
-          </label>
-          <label className="field" style={{ marginBottom: 0 }}>
-            <span>Password</span>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
-              onKeyDown={(e) => { if (e.key === 'Enter') submit(); }} />
-          </label>
+          {useRecovery ? (
+            <label className="field" style={{ marginBottom: 0 }}>
+              <span>Recovery code</span>
+              <input value={recoveryCode} onChange={(e) => setRecoveryCode(e.target.value)} placeholder="GIGI-XXXX-XXXX-XXXX"
+                onKeyDown={(e) => { if (e.key === 'Enter') submit(); }} />
+            </label>
+          ) : (
+            <>
+              <label className="field" style={{ marginBottom: 0 }}>
+                <span>Email</span>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+              </label>
+              <label className="field" style={{ marginBottom: 0 }}>
+                <span>Password</span>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
+                  onKeyDown={(e) => { if (e.key === 'Enter') submit(); }} />
+              </label>
+            </>
+          )}
           {error && <p className="small" style={{ color: 'var(--danger)', margin: 0 }}>{error}</p>}
-          <button className="btn btn-primary" disabled={!email || !password || busy} onClick={submit}>
+          <button className="btn btn-primary" disabled={busy || (useRecovery ? !recoveryCode : (!email || !password))} onClick={submit}>
             {busy ? 'Logging in…' : 'Log in'}
+          </button>
+          <button className="link small" style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => { setUseRecovery((v) => !v); setError(''); }}>
+            {useRecovery ? 'Use email & password instead' : 'Log in with a recovery code (no email)'}
           </button>
         </div>
 

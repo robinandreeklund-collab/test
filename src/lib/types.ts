@@ -32,12 +32,32 @@ export type MemberRole = 'owner' | 'adult' | 'teen';
 export interface Member {
   id: string;
   householdId: string;
-  name: string;
-  email: string;
+  name: string; // display handle only; strong identifiers live in the vault
   role: MemberRole;
   status: 'active' | 'invited';
-  passwordHash?: string; // set when they accept the invite
+  // Links to the identity vault. The member/content records never hold the
+  // login email, password, or recovery code — only this opaque id.
+  subjectId: string;
   inviteToken?: string; // present while status === 'invited'
+  createdAt: string;
+}
+
+// Identity vault — the ONLY place strong identifiers live, kept separate from
+// all content (bills/digests/processing), which is keyed by opaque ids only.
+// A dump of the content store is therefore not linkable to a person.
+export interface Identity {
+  subjectId: string;
+  email?: string; // optional — accounts can be email-free
+  passwordHash?: string; // "salt:scryptHex"
+  recoveryHash?: string; // sha256 of the one-time recovery code
+  createdAt: string;
+}
+
+// Opaque server-side session. The cookie holds only the random token; it
+// reveals nothing about the user (no member id, no PII).
+export interface Session {
+  token: string;
+  memberId: string;
   createdAt: string;
 }
 

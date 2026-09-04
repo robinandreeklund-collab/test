@@ -1,29 +1,37 @@
 import { NextResponse } from 'next/server';
-import { createHousehold, findHouseholdByEmail, findMemberByEmail, ownerMember, track } from '@/lib/store';
-import { hashPassword, SESSION_COOKIE, COOKIE_OPTS } from '@/lib/auth';
+import { createHousehold, findIdentityByEmail, createSession, track } from '@/lib/store';
+import { hashPassword, generateRecoveryCode, hashRecovery, SESSION_COOKIE, COOKIE_OPTS } from '@/lib/auth';
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const ownerName = String(body.name ?? '').trim();
-  const email = String(body.email ?? '').trim();
+  const emailRaw = String(body.email ?? '').trim();
+  const email = emailRaw || undefined; // email is optional (anonymous-friendly)
   const password = String(body.password ?? '');
 
   if (!ownerName) return NextResponse.json({ error: 'Enter your first name.' }, { status: 400 });
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return NextResponse.json({ error: 'Enter a valid email.' }, { status: 400 });
   }
   if (password.length < 6) {
     return NextResponse.json({ error: 'Password must be at least 6 characters.' }, { status: 400 });
   }
-  if (findHouseholdByEmail(email) || findMemberByEmail(email)) {
+  if (email && findIdentityByEmail(email)) {
     return NextResponse.json({ error: 'An account with that email already exists. Try logging in.' }, { status: 409 });
   }
 
-  const hh = createHousehold({ ownerName, email, passwordHash: hashPassword(password) });
-  const owner = ownerMember(hh.id)!;
-  track('signup', hh.id, {});
+  // Always mint a one-time recovery code (the only way back in for email-free
+  // accounts). Stored as a hash; shown to the user exactly once.
+  const recoveryCode = generateRecoveryCode();
+  const { household, member } = createHousehold({
+    ownerName,
+    email,
+    passwordHash: hashPassword(password),
+    recoveryHash: hashRecovery(recoveryCode),
+  });
+  track('signup', household.id, { emailless: !email });
 
-  const res = NextResponse.json({ ok: true, household: { id: hh.id, ownerName: hh.ownerName, email: hh.email } });
-  res.cookies.set(SESSION_COOKIE, owner.id, COOKIE_OPTS);
+  const res = NextResponse.json({ ok: true, recoveryCode, household: { id: household.id, ownerName } });
+  res.cookies.set(SESSION_COOKIE, createSession(member.id), COOKIE_OPTS);
   return res;
 }
