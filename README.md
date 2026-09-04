@@ -65,8 +65,12 @@ The build now has a real **sign-up / log-in** with sessions:
   a per-item **⚑ feedback** report.
 - **Home** (`/app`) — value tracker, next renewal, and a button to **simulate
   tonight's 2am run**.
-- **Settings** (`/app/settings`) — digest time/timezone/pause, data deletion, and
-  a demo toggle to **simulate a dropped connection** (see the degraded state).
+- **Your data** (`/app/data`) — the **trust log**: a plain-language, hash-chained,
+  append-only record of everything GiGi did with your data, plus the full
+  subprocessor list. Reachable from Home and Settings.
+- **Settings** (`/app/settings`) — digest time/timezone/pause, data deletion
+  (which is itself recorded in the trust log), and a demo toggle to **simulate a
+  dropped connection** (see the degraded state).
 - **Metrics** (`/app/metrics`) — the founder view of the instrumentation.
 
 ## Project layout
@@ -98,6 +102,7 @@ render.yaml               Render blueprint
 - [`docs/API.md`](docs/API.md) — every endpoint.
 - [`docs/DECISIONS.md`](docs/DECISIONS.md) — **how the beta-risk critique shaped this build** (skip Gmail OAuth, single market, no insurance fee, DPIA/EU-inference, P0 gaps closed).
 - [`docs/FORWARDING.md`](docs/FORWARDING.md) — **how to try the forward feature** (in-app tester with zero setup; real email via Postmark/Cloudflare on free Render; optional AI extraction).
+- [`docs/DATA_TRUST.md`](docs/DATA_TRUST.md) — **the trust log**: a per-household, plain-language, hash-chained record of everything done with the user's data (`/app/data`), doubling as the GDPR record of processing.
 - [`db/schema.sql`](db/schema.sql) — the production schema.
 - [`CLAUDE.md`](CLAUDE.md) — extraction + digest prompt contracts.
 

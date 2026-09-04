@@ -126,5 +126,31 @@ create table waitlist (
 );
 create index on waitlist (segment);
 
+-- --- Trust log (user-facing processing lineage) -----------------------------
+-- What the USER sees: exactly what happened with their data, in plain language.
+-- Metadata only — never email bodies or amounts. Hash-chained so it is provably
+-- append-only (each row hashes the previous one).
+create table processing_events (
+  id           uuid primary key default gen_random_uuid(),
+  household_id uuid not null references households(id) on delete cascade,
+  at           timestamptz not null default now(),
+  action       text not null check (action in (
+                 'account_created','email_received','analyzed_on_server','sent_to_ai',
+                 'ai_returned','stored','digest_generated','shared_for_execution',
+                 'connection_changed','data_deleted')),
+  category     text not null check (category in ('bill','digest','account','system')),
+  actor        text not null check (actor in ('you','gigi_server','gigi_ai','email_service','concierge')),
+  detail       text not null,   -- plain-language, metadata only
+  purpose      text not null,   -- why it happened
+  legal_basis  text not null,   -- GDPR basis in plain words
+  region       text not null,
+  duration_ms  int,
+  prev_hash    text not null,
+  hash         text not null
+);
+create index on processing_events (household_id, at);
+-- Note: on erasure, content tables cascade-delete, but the processing_events
+-- row recording the deletion is written *after* and deliberately kept as proof.
+
 -- Row-level security is expected once Supabase Auth is wired: each household
 -- reads only its own rows. Omitted here since the beta build is single-tenant.

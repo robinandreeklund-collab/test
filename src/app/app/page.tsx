@@ -101,6 +101,14 @@ export default function Home() {
         Demo control — reruns the nightly digest job for your household.
       </p>
 
+      <Link href="/app/data" className="card row between" style={{ marginTop: 18, textDecoration: 'none' }}>
+        <div>
+          <h3 style={{ marginBottom: 2 }}>🔒 Your data, fully transparent</h3>
+          <span className="small muted">See exactly what GiGi did with your data</span>
+        </div>
+        <span className="pill">Open →</span>
+      </Link>
+
       <p className="tiny muted center" style={{ marginTop: 18 }}>
         <Link href="/app/metrics" className="link">Founder metrics</Link>
       </p>

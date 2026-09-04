@@ -59,6 +59,10 @@ inference; `ANTHROPIC_REGION=eu` is the documented default, and Render deploys t
   every meaningful action, viewable at `/app/metrics`.
 - **In-app feedback channel**: per-item "⚑ report" and a settings form → training
   data for extraction quality.
+- **Trust log** (`/app/data`): a per-household, plain-language, hash-chained
+  record of everything done with the user's data — the data flow, never the
+  content. Doubles as the GDPR record of processing and makes the EU-inference
+  question visible rather than hidden. See `docs/DATA_TRUST.md`.
 
 ## Still open (flagged, not silently dropped)
 

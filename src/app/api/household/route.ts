@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { updateHousehold, track } from '@/lib/store';
+import { updateHousehold, track, logProcessing } from '@/lib/store';
 import { resolveHousehold } from '@/lib/auth';
 import type { Currency, Market } from '@/lib/types';
 
@@ -39,5 +39,17 @@ export async function PATCH(req: Request) {
 
   const updated = updateHousehold(current.id, patch);
   track('household_updated', current.id, { fields: Object.keys(patch) });
+
+  if ('connectionStatus' in patch) {
+    logProcessing(
+      current.id, 'connection_changed', 'account', 'you',
+      patch.connectionStatus === 'active'
+        ? 'You reconnected your forwarding inbox'
+        : 'Your forwarding connection changed state',
+      'Manage which emails GiGi receives',
+      'Consent',
+    );
+  }
+
   return NextResponse.json({ household: updated });
 }

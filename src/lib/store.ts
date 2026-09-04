@@ -7,6 +7,7 @@
 // ever touches this module, so swapping it for the Postgres schema in
 // db/schema.sql is a localized change.
 
+import { createHash } from 'crypto';
 import type {
   ActionLog,
   AnalyticsEvent,
@@ -14,6 +15,9 @@ import type {
   Digest,
   Feedback,
   Household,
+  ProcessingAction,
+  ProcessingActor,
+  ProcessingEvent,
   WaitlistEntry,
 } from './types';
 import { buildDigest } from './digest';
@@ -26,6 +30,7 @@ interface DB {
   events: AnalyticsEvent[];
   feedback: Feedback[];
   waitlist: WaitlistEntry[];
+  processing: ProcessingEvent[];
 }
 
 // Persist across Next.js hot reloads in dev by hanging off globalThis.
@@ -141,6 +146,7 @@ function seed(): DB {
     events: [],
     feedback: [],
     waitlist: [],
+    processing: [],
   };
 
   // Generate today's digest for the demo household so the app has something live.
@@ -153,7 +159,50 @@ function seed(): DB {
     createdAt: iso(),
   });
 
+  // Seed a short, realistic trust-log history so the "Your data" screen isn't
+  // empty in the demo. Uses the same append-only hashing as live events.
+  seedProcessing(db, householdId);
+
   return db;
+}
+
+// Deterministic canonical string for the hash chain (order matters).
+function processingDigest(prevHash: string, e: Omit<ProcessingEvent, 'id' | 'hash' | 'prevHash'>): string {
+  const canonical = [e.at, e.action, e.category, e.actor, e.region, e.purpose, e.legalBasis, e.detail].join('|');
+  return createHash('sha256').update(`${prevHash}|${canonical}`).digest('hex');
+}
+
+function pushProcessing(db: DB, input: Omit<ProcessingEvent, 'id' | 'hash' | 'prevHash'>): ProcessingEvent {
+  const prior = db.processing.filter((p) => p.householdId === input.householdId);
+  const prevHash = prior.length ? prior[prior.length - 1].hash : 'genesis';
+  const base = { ...input };
+  const hash = processingDigest(prevHash, base);
+  const entry: ProcessingEvent = { ...base, id: id('proc'), prevHash, hash };
+  db.processing.push(entry);
+  return entry;
+}
+
+function seedProcessing(db: DB, householdId: string) {
+  const mk = (
+    minutesAgo: number,
+    action: ProcessingAction,
+    category: ProcessingEvent['category'],
+    actor: ProcessingActor,
+    detail: string,
+    purpose: string,
+    legalBasis: string,
+    region: string,
+    durationMs?: number,
+  ) => {
+    const at = new Date(Date.now() - minutesAgo * 60_000).toISOString();
+    pushProcessing(db, { householdId, at, action, category, actor, detail, purpose, legalBasis, region, durationMs });
+  };
+  // Oldest first so the chain reads chronologically.
+  mk(60 * 26, 'account_created', 'account', 'you', 'You created your household', 'Set up your account', 'Contract (providing the service)', 'EU (London)');
+  mk(60 * 24, 'email_received', 'bill', 'email_service', 'A broadband email you forwarded arrived', 'You asked GiGi to watch this sender', 'Consent', 'EU (London)');
+  mk(60 * 24 - 1, 'analyzed_on_server', 'bill', 'gigi_server', 'GiGi read it on our server (no AI, nothing left the server)', 'Find the provider, price and renewal date', 'Consent', 'EU (London)', 40);
+  mk(60 * 24 - 1, 'stored', 'bill', 'gigi_server', 'A broadband bill was saved to your register', 'Track your renewal', 'Consent', 'EU (London)');
+  mk(60 * 2, 'digest_generated', 'digest', 'gigi_server', "Tonight's digest was prepared", 'Show you what needs attention', 'Contract (providing the service)', 'EU (London)', 12);
 }
 
 function getDB(): DB {
@@ -268,6 +317,12 @@ export function createHousehold(input: {
 
   db.digests.push(buildDigest(household, listBills(hid), []));
   db.events.push({ id: id('evt'), householdId: hid, name: 'household_created', props: {}, createdAt: iso() });
+  logProcessing(
+    hid, 'account_created', 'account', 'you',
+    'You created your household',
+    'Set up your account',
+    'Contract (providing the service)',
+  );
   return household;
 }
 
@@ -410,4 +465,71 @@ export function addWaitlist(email: string, segment: 'household' | 'company', sou
 
 export function listWaitlist(): WaitlistEntry[] {
   return [...getDB().waitlist].reverse();
+}
+
+// --- Trust log (user-facing processing lineage) ------------------------------
+
+// Append one processing event to a household's tamper-evident log. `detail`
+// must be metadata only (a provider or category is fine; never amounts or the
+// email body).
+export function logProcessing(
+  householdId: string,
+  action: ProcessingAction,
+  category: ProcessingEvent['category'],
+  actor: ProcessingActor,
+  detail: string,
+  purpose: string,
+  legalBasis: string,
+  region = 'EU (London)',
+  durationMs?: number,
+): ProcessingEvent {
+  return pushProcessing(getDB(), {
+    householdId,
+    at: iso(),
+    action,
+    category,
+    actor,
+    detail,
+    purpose,
+    legalBasis,
+    region,
+    durationMs,
+  });
+}
+
+export function listProcessing(householdId: string): ProcessingEvent[] {
+  return getDB().processing.filter((p) => p.householdId === householdId);
+}
+
+// Recompute the hash chain to prove the log has not been altered or reordered.
+export function verifyProcessingChain(householdId: string): { ok: boolean; count: number } {
+  const chain = listProcessing(householdId);
+  let prev = 'genesis';
+  for (const e of chain) {
+    if (e.prevHash !== prev) return { ok: false, count: chain.length };
+    const expected = processingDigest(prev, e);
+    if (expected !== e.hash) return { ok: false, count: chain.length };
+    prev = e.hash;
+  }
+  return { ok: true, count: chain.length };
+}
+
+// Right to erasure. Clears the household's content-bearing data and records a
+// final, verifiable deletion entry in the trust log (metadata only — the record
+// that deletion happened is itself a trust signal).
+export function deleteHouseholdData(householdId: string): void {
+  const db = getDB();
+  db.bills = db.bills.filter((b) => b.householdId !== householdId);
+  db.digests = db.digests.filter((d) => d.householdId !== householdId);
+  db.actions = db.actions.filter((a) => a.householdId !== householdId);
+  db.feedback = db.feedback.filter((f) => f.householdId !== householdId);
+  logProcessing(
+    householdId,
+    'data_deleted',
+    'account',
+    'you',
+    'You deleted all your data — bills, digests and history were erased',
+    'Your right to erasure',
+    'Legal obligation (GDPR Art. 17)',
+  );
 }

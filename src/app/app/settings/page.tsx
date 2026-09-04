@@ -126,12 +126,20 @@ export default function Settings() {
 
       <section className="card stack">
         <h3>Privacy &amp; data</h3>
+        <Link href="/app/data" className="btn btn-subtle btn-sm" style={{ width: '100%' }}>
+          🔎 See everything GiGi did with your data →
+        </Link>
         <Link href="/privacy" className="link small">Privacy policy →</Link>
         <p className="tiny muted" style={{ margin: 0 }}>UK &amp; EU data only. No user content in logs.</p>
         <button
           className="btn btn-ghost btn-sm"
           style={{ width: '100%', color: 'var(--danger)', borderColor: '#e6c9c4' }}
-          onClick={() => { if (confirm('Delete everything? This removes all your data within 30 days.')) { trackClient('data_deletion_requested'); showToast('Deletion requested — confirmed by email.'); } }}
+          onClick={async () => {
+            if (!confirm('Delete everything? This erases all your bills, digests and history now.')) return;
+            await fetch('/api/account/delete', { method: 'POST' });
+            trackClient('data_deletion_executed');
+            showToast('Done — your data was erased. See the record under Your data.');
+          }}
         >
           Delete everything
         </button>

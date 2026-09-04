@@ -130,3 +130,47 @@ export interface WaitlistEntry {
   source: string;
   createdAt: string;
 }
+
+// --- Trust log (user-facing data-processing lineage) -------------------------
+// Distinct from AnalyticsEvent (which is for the founder). This is what the
+// USER sees: exactly what happened with their data, in plain language. It
+// records the data FLOW, never the data itself — no email bodies, no amounts.
+
+export type ProcessingActor =
+  | 'you' // the user's own action
+  | 'gigi_server' // stores + analyses on our EU server
+  | 'gigi_ai' // Anthropic, EU region — only when AI extraction is enabled
+  | 'email_service' // inbound email provider
+  | 'concierge'; // founder-assisted execution / the provider a switch goes to
+
+export type ProcessingAction =
+  | 'account_created'
+  | 'email_received'
+  | 'analyzed_on_server'
+  | 'sent_to_ai'
+  | 'ai_returned'
+  | 'stored'
+  | 'digest_generated'
+  | 'shared_for_execution'
+  | 'connection_changed'
+  | 'data_deleted';
+
+export interface ProcessingEvent {
+  id: string;
+  householdId: string;
+  at: string; // ISO timestamp
+  action: ProcessingAction;
+  category: 'bill' | 'digest' | 'account' | 'system';
+  actor: ProcessingActor;
+  // Plain-language, metadata only (may name a provider/category — never amounts
+  // or email content).
+  detail: string;
+  purpose: string; // why it happened
+  legalBasis: string; // GDPR basis in plain words
+  region: string; // where it happened, e.g. "EU (London)"
+  durationMs?: number;
+  // Tamper-evidence: each entry hashes the previous one, so the log is
+  // verifiably append-only.
+  prevHash: string;
+  hash: string;
+}

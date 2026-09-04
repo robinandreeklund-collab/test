@@ -28,9 +28,14 @@ export default function Privacy() {
           We never send, delete or modify anything in a connected account. We never store
           information about other families&apos; children. Every external action waits for your tap.
         </Section>
+        <Section title="Total transparency">
+          Every household has a live, plain-language log of exactly what GiGi did with their data —
+          every email received, every analysis, everywhere it went, with timestamps. It&apos;s
+          append-only and verifiable. See it under <strong>Your data</strong> in the app.
+        </Section>
         <Section title="Your controls">
-          Disconnect any inbox instantly. One tap deletes everything, completed within 30 days and
-          confirmed by email.
+          Disconnect any inbox instantly. One tap deletes everything — and the deletion itself is
+          recorded in your data log as proof.
         </Section>
         <Section title="Registration">
           Registered with the relevant data-protection authority before beta launch. A full DPIA is

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getTodayDigest, logAction, track } from '@/lib/store';
+import { getTodayDigest, logAction, track, logProcessing } from '@/lib/store';
 import { resolveHousehold } from '@/lib/auth';
 import type { DigestItem } from '@/lib/types';
 
@@ -52,6 +52,17 @@ export async function POST(req: Request) {
     executable: item.executable,
     savingAnnual: item.savingAnnual ?? null,
   });
+
+  // Approving an executable action is the one moment data is shared outward —
+  // record it plainly in the trust log.
+  if (action === 'approve' && item.executable) {
+    logProcessing(
+      hh.id, 'shared_for_execution', 'bill', 'concierge',
+      'You approved a switch — your name and address were shared to carry it out',
+      'Execute the switch you approved',
+      'Consent (your explicit approval)',
+    );
+  }
 
   return NextResponse.json({ ok: true, item, outcome });
 }
