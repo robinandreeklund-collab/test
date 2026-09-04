@@ -97,6 +97,7 @@ render.yaml               Render blueprint
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — system shape, real vs. simulated.
 - [`docs/API.md`](docs/API.md) — every endpoint.
 - [`docs/DECISIONS.md`](docs/DECISIONS.md) — **how the beta-risk critique shaped this build** (skip Gmail OAuth, single market, no insurance fee, DPIA/EU-inference, P0 gaps closed).
+- [`docs/FORWARDING.md`](docs/FORWARDING.md) — **how to try the forward feature** (in-app tester with zero setup; real email via Postmark/Cloudflare on free Render; optional AI extraction).
 - [`db/schema.sql`](db/schema.sql) — the production schema.
 - [`CLAUDE.md`](CLAUDE.md) — extraction + digest prompt contracts.
 

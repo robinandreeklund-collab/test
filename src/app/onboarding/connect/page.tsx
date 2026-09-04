@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Progress } from '@/components/OnboardingProgress';
+import ForwardTester from '@/components/ForwardTester';
 import { trackClient } from '@/lib/analytics';
 
 // No OAuth in the beta (docs/DECISIONS.md §1): the user forwards known senders
@@ -59,6 +60,10 @@ export default function Connect() {
           <strong>Add it by hand</strong> — type in a provider and renewal date in the next step.
           Nothing has to come from email.
         </p>
+      </div>
+
+      <div style={{ marginTop: 12 }}>
+        <ForwardTester />
       </div>
 
       <button

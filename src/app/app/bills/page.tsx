@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { trackClient } from '@/lib/analytics';
 import { formatMoney } from '@/lib/money';
 import { AddBill } from '@/components/AddBill';
+import ForwardTester from '@/components/ForwardTester';
 import type { Bill, Currency } from '@/lib/types';
 
 export default function BillsRegister() {
@@ -11,6 +12,7 @@ export default function BillsRegister() {
   const [currency, setCurrency] = useState<Currency>('GBP');
   const [monthlyTotal, setMonthlyTotal] = useState(0);
   const [adding, setAdding] = useState(false);
+  const [forwarding, setForwarding] = useState(false);
 
   async function load() {
     const j = await fetch('/api/bills').then((r) => r.json());
@@ -68,6 +70,17 @@ export default function BillsRegister() {
       ) : (
         <button className="btn btn-primary" style={{ marginTop: 14 }} onClick={() => { setAdding(true); trackClient('add_bill_opened', { where: 'register' }); }}>
           + Add a bill
+        </button>
+      )}
+
+      {forwarding ? (
+        <div style={{ marginTop: 12 }}>
+          <ForwardTester onIngested={load} />
+          <button className="btn btn-ghost" style={{ marginTop: 10 }} onClick={() => setForwarding(false)}>Close</button>
+        </div>
+      ) : (
+        <button className="btn btn-ghost" style={{ marginTop: 10 }} onClick={() => { setForwarding(true); trackClient('forward_tester_opened', { where: 'register' }); }}>
+          ✉ Forward a bill to GiGi
         </button>
       )}
     </div>

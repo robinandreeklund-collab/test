@@ -181,6 +181,31 @@ export function findHouseholdByEmail(email: string): Household | undefined {
   return getDB().households.find((h) => h.email.toLowerCase() === e);
 }
 
+// Route an inbound (forwarded) email to a household. Best-effort so the forward
+// feature "just works" for a single tester without fiddly plus-addressing:
+//   1) recipient contains the household's forwarding local-part or its id
+//   2) sender matches a household's own email (they forwarded from their inbox)
+//   3) exactly one real (non-demo) household exists → use it
+//   4) fall back to the demo household
+export function resolveInboundHousehold(recipient?: string, sender?: string): Household {
+  const db = getDB();
+  const rcpt = (recipient ?? '').toLowerCase();
+  if (rcpt) {
+    const byAddr = db.households.find((h) => {
+      const local = h.forwardingAddress.split('@')[0].toLowerCase();
+      return rcpt.includes(local) || rcpt.includes(h.id.toLowerCase());
+    });
+    if (byAddr) return byAddr;
+  }
+  if (sender) {
+    const bySender = findHouseholdByEmail(sender.replace(/.*</, '').replace(/>.*/, '').trim());
+    if (bySender) return bySender;
+  }
+  const real = db.households.filter((h) => h.id !== 'hh_demo');
+  if (real.length === 1) return real[0];
+  return getDefaultHousehold();
+}
+
 // Create a brand-new household on sign-up. Seeds a couple of "found" (extracted,
 // unconfirmed) example bills so the bills-found onboarding screen has something
 // to confirm, plus today's digest.
