@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { scryptSync, randomBytes, timingSafeEqual } from 'crypto';
-import { getHouseholdById, getDefaultHousehold } from './store';
-import type { Household } from './types';
+import { getDefaultHousehold, getHouseholdById, getMemberById, ownerMember } from './store';
+import type { Household, Member, MemberRole } from './types';
 
 export const SESSION_COOKIE = 'gigi_session';
 
@@ -30,21 +30,49 @@ export function verifyPassword(password: string, stored?: string): boolean {
   return candidate.length === expected.length && timingSafeEqual(candidate, expected);
 }
 
-// Resolve the household for the current request from its session cookie.
-// Falls back to the seeded demo household so the /app demo links keep working
-// even without logging in.
-export function resolveHousehold(): Household {
+// The session cookie now stores a MEMBER id. Resolve the current member (or the
+// demo owner as a fallback so /app demo links keep working without logging in).
+export function currentMember(): Member | null {
   const id = cookies().get(SESSION_COOKIE)?.value;
   if (id) {
-    const hh = getHouseholdById(id);
-    if (hh) return hh;
+    const m = getMemberById(id);
+    if (m && m.status === 'active') return m;
   }
-  return getDefaultHousehold();
+  return null;
+}
+
+export function resolveMember(): Member {
+  const m = currentMember();
+  if (m) return m;
+  // Fallback: the demo household's owner member.
+  return ownerMember(getDefaultHousehold().id)!;
+}
+
+// Resolve the household for the current request via the session member.
+export function resolveHousehold(): Household {
+  const m = resolveMember();
+  return getHouseholdById(m.householdId) ?? getDefaultHousehold();
 }
 
 // Is there a real (non-fallback) logged-in session?
 export function currentSessionHouseholdId(): string | null {
-  const id = cookies().get(SESSION_COOKIE)?.value;
-  if (id && getHouseholdById(id)) return id;
-  return null;
+  const m = currentMember();
+  return m ? m.householdId : null;
+}
+
+// --- Capabilities ------------------------------------------------------------
+export type Capability = 'manageMembers' | 'approve' | 'manageBills' | 'viewFinances' | 'forward';
+
+const CAPS: Record<MemberRole, Capability[]> = {
+  owner: ['manageMembers', 'approve', 'manageBills', 'viewFinances', 'forward'],
+  adult: ['approve', 'manageBills', 'viewFinances', 'forward'], // co-parent
+  teen: [], // limited view: no finances, no execution, no management
+};
+
+export function can(role: MemberRole, cap: Capability): boolean {
+  return CAPS[role].includes(cap);
+}
+
+export function capabilitiesFor(role: MemberRole): Capability[] {
+  return CAPS[role];
 }

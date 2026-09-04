@@ -31,6 +31,35 @@ create table households (
   created_at         timestamptz not null default now()
 );
 
+-- --- Members (family accounts) ----------------------------------------------
+-- Adults (owner + co-parents) and teens who can log in. Auth lives here, not on
+-- households. Younger children are profiles (below) with no login.
+create table members (
+  id            uuid primary key default gen_random_uuid(),
+  household_id  uuid not null references households(id) on delete cascade,
+  name          text not null,
+  email         text not null,
+  role          text not null check (role in ('owner','adult','teen')),
+  status        text not null default 'invited' check (status in ('active','invited')),
+  password_hash text,               -- set when they accept the invite
+  invite_token  text unique,        -- present while invited
+  created_at    timestamptz not null default now()
+);
+create unique index on members (lower(email)) where status = 'active';
+create index on members (household_id);
+
+-- --- Children (profiles, no login) ------------------------------------------
+-- Special-category data — kept minimal (see docs/DECISIONS.md, DPIA).
+create table children (
+  id              uuid primary key default gen_random_uuid(),
+  household_id    uuid not null references households(id) on delete cascade,
+  name            text not null,
+  year_group      text,
+  passport_expiry date,
+  created_at      timestamptz not null default now()
+);
+create index on children (household_id);
+
 -- --- Bills -------------------------------------------------------------------
 create table bills (
   id                  uuid primary key default gen_random_uuid(),

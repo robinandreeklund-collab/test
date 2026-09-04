@@ -1,18 +1,23 @@
 import { NextResponse } from 'next/server';
 import { getTodayDigest, logAction, track, logProcessing } from '@/lib/store';
-import { resolveHousehold } from '@/lib/auth';
+import { resolveHousehold, resolveMember, can } from '@/lib/auth';
 import type { DigestItem } from '@/lib/types';
 
 // The approve-to-execute loop. Every external action is gated by this explicit
 // call and written to the action log (what, when, outcome).
 export async function POST(req: Request) {
   const hh = resolveHousehold();
+  const me = resolveMember();
   const body = await req.json().catch(() => ({}));
   const itemId = String(body.itemId ?? '');
   const action = body.action as 'approve' | 'done' | 'dismiss';
 
   if (!['approve', 'done', 'dismiss'].includes(action)) {
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+  }
+  // Teens have a limited view: they can't approve executions.
+  if (action === 'approve' && !can(me.role, 'approve')) {
+    return NextResponse.json({ error: 'Only a parent can approve actions.' }, { status: 403 });
   }
 
   const digest = getTodayDigest(hh.id);

@@ -24,11 +24,40 @@ export type DigestItemCategory = 'bill' | 'school' | 'travel' | 'system';
 // Connection state for the forward-to-GiGi mechanism (no OAuth in beta).
 export type ConnectionStatus = 'pending' | 'active' | 'degraded';
 
+// Who can log in to a household. A family account has one owner, optional
+// co-parents (adult), and optional teens (limited view — no finances, no
+// execution). Younger children are Child profiles with no login.
+export type MemberRole = 'owner' | 'adult' | 'teen';
+
+export interface Member {
+  id: string;
+  householdId: string;
+  name: string;
+  email: string;
+  role: MemberRole;
+  status: 'active' | 'invited';
+  passwordHash?: string; // set when they accept the invite
+  inviteToken?: string; // present while status === 'invited'
+  createdAt: string;
+}
+
+// A child profile (no login): used to associate school emails and travel/
+// passport nudges. Sensitive data — kept minimal (see docs/DECISIONS.md, DPIA).
+export interface Child {
+  id: string;
+  householdId: string;
+  name: string;
+  yearGroup?: string;
+  passportExpiry?: string; // ISO date
+  createdAt: string;
+}
+
 export interface Household {
   id: string;
   ownerName: string;
   email: string;
-  // "salt:scryptHex". Absent on the seeded demo household (which has no password).
+  // "salt:scryptHex". Legacy field — auth now lives on Member. Kept for the
+  // owner's convenience display; the owner Member is the source of truth.
   passwordHash?: string;
   market: Market;
   currency: Currency;
@@ -153,6 +182,11 @@ export type ProcessingAction =
   | 'digest_generated'
   | 'shared_for_execution'
   | 'connection_changed'
+  | 'member_invited'
+  | 'member_joined'
+  | 'member_removed'
+  | 'child_added'
+  | 'child_removed'
   | 'data_deleted';
 
 export interface ProcessingEvent {

@@ -65,6 +65,11 @@ The build now has a real **sign-up / log-in** with sessions:
   a per-item **⚑ feedback** report.
 - **Home** (`/app`) — value tracker, next renewal, and a button to **simulate
   tonight's 2am run**.
+- **Family** (`/app/family`) — invite a **co-parent** (can act) or a **teen**
+  (limited view — no finances, no approvals) via a share link, and add **child
+  profiles** (no login) for school/passport association. Roles are enforced
+  server-side; every change is in the trust log. Reachable from Settings and the
+  end of onboarding; invitees join at `/join/<token>`.
 - **Your data** (`/app/data`) — the **trust log**: a plain-language, hash-chained,
   append-only record of everything GiGi did with your data, plus the full
   subprocessor list. Reachable from Home and Settings.

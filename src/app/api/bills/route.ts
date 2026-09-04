@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { addBill, listBills, regenerateDigest, track } from '@/lib/store';
-import { resolveHousehold } from '@/lib/auth';
+import { resolveHousehold, resolveMember, can } from '@/lib/auth';
 import type { BillType } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -8,6 +8,9 @@ export const dynamic = 'force-dynamic';
 const BILL_TYPES: BillType[] = ['broadband', 'energy', 'mobile', 'tv', 'insurance', 'other'];
 
 export async function GET() {
+  if (!can(resolveMember().role, 'viewFinances')) {
+    return NextResponse.json({ error: 'Bills are not visible on this account.' }, { status: 403 });
+  }
   const hh = resolveHousehold();
   const bills = listBills(hh.id);
   const total = bills
@@ -18,6 +21,9 @@ export async function GET() {
 
 // Manual add bill — P0 in this build (the plan had it as P1; see docs/DECISIONS.md).
 export async function POST(req: Request) {
+  if (!can(resolveMember().role, 'manageBills')) {
+    return NextResponse.json({ error: 'Only a parent can add bills.' }, { status: 403 });
+  }
   const hh = resolveHousehold();
   const body = await req.json().catch(() => ({}));
 

@@ -9,7 +9,7 @@ import type { Household } from '@/lib/types';
 export default function Settings() {
   const router = useRouter();
   const [hh, setHh] = useState<Household | null>(null);
-  const [me, setMe] = useState<{ loggedIn: boolean; isDemo: boolean } | null>(null);
+  const [me, setMe] = useState<{ loggedIn: boolean; isDemo: boolean; member?: { name: string; email: string; role: string } } | null>(null);
   const [toast, setToast] = useState('');
   const [feedback, setFeedback] = useState('');
 
@@ -47,11 +47,17 @@ export default function Settings() {
         <h3>Account</h3>
         <div className="row between">
           <div>
-            <div className="small" style={{ fontWeight: 600 }}>{hh.ownerName}</div>
-            <span className="tiny muted">{hh.email}</span>
+            <div className="small" style={{ fontWeight: 600 }}>{me?.member?.name ?? hh.ownerName}</div>
+            <span className="tiny muted">{me?.member?.email ?? hh.email}</span>
           </div>
-          {me?.isDemo && <span className="pill accent">Demo</span>}
+          <div style={{ textAlign: 'right' }}>
+            {me?.member?.role && <span className="pill brand">{me.member.role === 'owner' ? 'Owner' : me.member.role === 'teen' ? 'Teen' : 'Co-parent'}</span>}
+            {me?.isDemo && <span className="pill accent" style={{ marginLeft: 6 }}>Demo</span>}
+          </div>
         </div>
+        <Link href="/app/family" className="btn btn-subtle btn-sm" style={{ width: '100%' }}>
+          👪 Family &amp; members →
+        </Link>
         {me?.isDemo ? (
           <Link href="/signup" className="btn btn-primary btn-sm" style={{ width: '100%' }}>
             Create your own account →

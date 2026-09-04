@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createHousehold, findHouseholdByEmail, track } from '@/lib/store';
+import { createHousehold, findHouseholdByEmail, findMemberByEmail, ownerMember, track } from '@/lib/store';
 import { hashPassword, SESSION_COOKIE, COOKIE_OPTS } from '@/lib/auth';
 
 export async function POST(req: Request) {
@@ -15,14 +15,15 @@ export async function POST(req: Request) {
   if (password.length < 6) {
     return NextResponse.json({ error: 'Password must be at least 6 characters.' }, { status: 400 });
   }
-  if (findHouseholdByEmail(email)) {
+  if (findHouseholdByEmail(email) || findMemberByEmail(email)) {
     return NextResponse.json({ error: 'An account with that email already exists. Try logging in.' }, { status: 409 });
   }
 
   const hh = createHousehold({ ownerName, email, passwordHash: hashPassword(password) });
+  const owner = ownerMember(hh.id)!;
   track('signup', hh.id, {});
 
   const res = NextResponse.json({ ok: true, household: { id: hh.id, ownerName: hh.ownerName, email: hh.email } });
-  res.cookies.set(SESSION_COOKIE, hh.id, COOKIE_OPTS);
+  res.cookies.set(SESSION_COOKIE, owner.id, COOKIE_OPTS);
   return res;
 }

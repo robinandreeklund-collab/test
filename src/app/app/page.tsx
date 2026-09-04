@@ -13,20 +13,32 @@ export default function Home() {
   const [monthlyTotal, setMonthlyTotal] = useState(0);
   const [digest, setDigest] = useState<Digest | null>(null);
   const [value, setValue] = useState<{ savedAnnual: number; handled: number } | null>(null);
+  const [me, setMe] = useState<{ name: string; role: string } | null>(null);
+  const [canFinance, setCanFinance] = useState(true);
 
   async function load() {
-    const [h, b, d, v] = await Promise.all([
+    const meRes = await fetch('/api/auth/me').then((r) => r.json());
+    setMe(meRes.member ?? null);
+    const finance = (meRes.capabilities ?? []).includes('viewFinances');
+    setCanFinance(finance);
+
+    const [h, d] = await Promise.all([
       fetch('/api/household').then((r) => r.json()),
-      fetch('/api/bills').then((r) => r.json()),
       fetch('/api/digest').then((r) => r.json()),
-      fetch('/api/value').then((r) => r.json()).catch(() => null),
     ]);
     setHousehold(h.household);
-    setBills(b.bills);
-    setCurrency(b.currency);
-    setMonthlyTotal(b.monthlyTotal);
     setDigest(d.digest);
-    if (v) setValue(v);
+
+    if (finance) {
+      const [b, v] = await Promise.all([
+        fetch('/api/bills').then((r) => r.json()),
+        fetch('/api/value').then((r) => r.json()).catch(() => null),
+      ]);
+      setBills(b.bills ?? []);
+      setCurrency(b.currency ?? 'GBP');
+      setMonthlyTotal(b.monthlyTotal ?? 0);
+      if (v) setValue(v);
+    }
   }
 
   useEffect(() => { load(); trackClient('home_viewed'); }, []);
@@ -46,15 +58,25 @@ export default function Home() {
         <span className="pill brand">● Running</span>
       </div>
 
-      <div className="card" style={{ background: 'linear-gradient(160deg,#3f6152,#2c4539)', color: '#fff', border: 'none' }}>
-        <p className="eyebrow" style={{ color: 'rgba(255,255,255,0.7)' }}>GiGi has handled</p>
-        <div className="value-hero" style={{ color: '#fff' }}>
-          {formatMoney(value?.savedAnnual ?? 0, currency)}<span style={{ fontSize: 16, fontWeight: 400 }}> saved/yr</span>
+      {canFinance ? (
+        <div className="card" style={{ background: 'linear-gradient(160deg,#3f6152,#2c4539)', color: '#fff', border: 'none' }}>
+          <p className="eyebrow" style={{ color: 'rgba(255,255,255,0.7)' }}>GiGi has handled</p>
+          <div className="value-hero" style={{ color: '#fff' }}>
+            {formatMoney(value?.savedAnnual ?? 0, currency)}<span style={{ fontSize: 16, fontWeight: 400 }}> saved/yr</span>
+          </div>
+          <p className="small" style={{ color: 'rgba(255,255,255,0.85)', margin: '4px 0 0' }}>
+            {value?.handled ?? 0} task{(value?.handled ?? 0) === 1 ? '' : 's'} taken off your plate
+          </p>
         </div>
-        <p className="small" style={{ color: 'rgba(255,255,255,0.85)', margin: '4px 0 0' }}>
-          {value?.handled ?? 0} task{(value?.handled ?? 0) === 1 ? '' : 's'} taken off your plate
-        </p>
-      </div>
+      ) : (
+        <div className="card" style={{ background: 'linear-gradient(160deg,#3f6152,#2c4539)', color: '#fff', border: 'none' }}>
+          <p className="eyebrow" style={{ color: 'rgba(255,255,255,0.7)' }}>Hi {me?.name}</p>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 22 }}>Your family digest</div>
+          <p className="small" style={{ color: 'rgba(255,255,255,0.85)', margin: '4px 0 0' }}>
+            You&apos;ll see what needs you — school, trips and reminders.
+          </p>
+        </div>
+      )}
 
       <Link href="/app/digest" className="card row between" style={{ marginTop: 12, textDecoration: 'none' }}>
         <div>
@@ -66,24 +88,26 @@ export default function Home() {
         <span className="pill">Open →</span>
       </Link>
 
-      <div className="row" style={{ gap: 12, marginTop: 12 }}>
-        <div className="card grow">
-          <p className="eyebrow" style={{ marginBottom: 6 }}>Monthly bills</p>
-          <div style={{ fontSize: 22, fontWeight: 700 }}>{formatMoney(monthlyTotal, currency)}</div>
-          <span className="tiny muted">{bills.filter((b) => b.confirmed).length} tracked</span>
+      {canFinance && (
+        <div className="row" style={{ gap: 12, marginTop: 12 }}>
+          <div className="card grow">
+            <p className="eyebrow" style={{ marginBottom: 6 }}>Monthly bills</p>
+            <div style={{ fontSize: 22, fontWeight: 700 }}>{formatMoney(monthlyTotal, currency)}</div>
+            <span className="tiny muted">{bills.filter((b) => b.confirmed).length} tracked</span>
+          </div>
+          <div className="card grow">
+            <p className="eyebrow" style={{ marginBottom: 6 }}>Next renewal</p>
+            {nextRenewal ? (
+              <>
+                <div style={{ fontSize: 16, fontWeight: 700 }}>{nextRenewal.provider}</div>
+                <span className="tiny muted">{nextRenewal.renewalDate}</span>
+              </>
+            ) : (
+              <span className="small muted">None tracked</span>
+            )}
+          </div>
         </div>
-        <div className="card grow">
-          <p className="eyebrow" style={{ marginBottom: 6 }}>Next renewal</p>
-          {nextRenewal ? (
-            <>
-              <div style={{ fontSize: 16, fontWeight: 700 }}>{nextRenewal.provider}</div>
-              <span className="tiny muted">{nextRenewal.renewalDate}</span>
-            </>
-          ) : (
-            <span className="small muted">None tracked</span>
-          )}
-        </div>
-      </div>
+      )}
 
       <div className="divider" />
 

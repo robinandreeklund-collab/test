@@ -12,9 +12,12 @@ import type {
   ActionLog,
   AnalyticsEvent,
   Bill,
+  Child,
   Digest,
   Feedback,
   Household,
+  Member,
+  MemberRole,
   ProcessingAction,
   ProcessingActor,
   ProcessingEvent,
@@ -24,6 +27,8 @@ import { buildDigest } from './digest';
 
 interface DB {
   households: Household[];
+  members: Member[];
+  children: Child[];
   bills: Bill[];
   digests: Digest[];
   actions: ActionLog[];
@@ -140,6 +145,20 @@ function seed(): DB {
 
   const db: DB = {
     households: [household],
+    members: [
+      {
+        id: 'mem_demo',
+        householdId,
+        name: 'Kerstin',
+        email: 'demo@getgigiapp.com',
+        role: 'owner',
+        status: 'active',
+        createdAt: iso(-40),
+      },
+    ],
+    children: [
+      { id: 'child_demo', householdId, name: 'Ella', yearGroup: 'Year 4', passportExpiry: isoDate(300), createdAt: iso(-40) },
+    ],
     bills,
     digests: [],
     actions: [],
@@ -315,6 +334,18 @@ export function createHousehold(input: {
     },
   );
 
+  // The owner is the first family member. Auth lives on the Member.
+  db.members.push({
+    id: id('mem'),
+    householdId: hid,
+    name: household.ownerName,
+    email: household.email,
+    role: 'owner',
+    status: 'active',
+    passwordHash: input.passwordHash,
+    createdAt: iso(),
+  });
+
   db.digests.push(buildDigest(household, listBills(hid), []));
   db.events.push({ id: id('evt'), householdId: hid, name: 'household_created', props: {}, createdAt: iso() });
   logProcessing(
@@ -324,6 +355,109 @@ export function createHousehold(input: {
     'Contract (providing the service)',
   );
   return household;
+}
+
+// --- Members (family accounts) -----------------------------------------------
+
+export function listMembers(householdId: string): Member[] {
+  return getDB().members.filter((m) => m.householdId === householdId);
+}
+
+export function getMemberById(memberId: string): Member | undefined {
+  return getDB().members.find((m) => m.id === memberId);
+}
+
+export function findMemberByEmail(email: string): Member | undefined {
+  const e = email.trim().toLowerCase();
+  return getDB().members.find((m) => m.email.toLowerCase() === e && m.status === 'active');
+}
+
+export function ownerMember(householdId: string): Member | undefined {
+  return getDB().members.find((m) => m.householdId === householdId && m.role === 'owner');
+}
+
+// Invite a family member (adult co-parent or teen). Returns the invite token.
+export function inviteMember(householdId: string, name: string, email: string, role: MemberRole): Member {
+  const member: Member = {
+    id: id('mem'),
+    householdId,
+    name,
+    email: email.trim(),
+    role: role === 'owner' ? 'adult' : role, // never invite a second owner
+    status: 'invited',
+    inviteToken: id('inv') + id('tok'),
+    createdAt: iso(),
+  };
+  getDB().members.push(member);
+  logProcessing(
+    householdId, 'member_invited', 'account', 'you',
+    `You invited ${name} to your household as ${member.role}`,
+    'Add a family member',
+    'Consent',
+  );
+  return member;
+}
+
+export function getMemberByInvite(token: string): Member | undefined {
+  return getDB().members.find((m) => m.inviteToken === token && m.status === 'invited');
+}
+
+// Accept an invite: set name/password and activate.
+export function activateMember(token: string, name: string, passwordHash: string): Member | undefined {
+  const m = getMemberByInvite(token);
+  if (!m) return undefined;
+  m.name = name || m.name;
+  m.passwordHash = passwordHash;
+  m.status = 'active';
+  delete m.inviteToken;
+  logProcessing(
+    m.householdId, 'member_joined', 'account', 'you',
+    `${m.name} joined your household`,
+    'A family member accepted their invite',
+    'Consent',
+  );
+  return m;
+}
+
+export function removeMember(householdId: string, memberId: string): boolean {
+  const db = getDB();
+  const m = db.members.find((x) => x.id === memberId && x.householdId === householdId);
+  if (!m || m.role === 'owner') return false; // never remove the owner
+  db.members = db.members.filter((x) => x.id !== memberId);
+  logProcessing(
+    householdId, 'member_removed', 'account', 'you',
+    `You removed ${m.name} from your household`,
+    'Manage who can access your household',
+    'Consent',
+  );
+  return true;
+}
+
+// --- Children (profiles, no login) -------------------------------------------
+
+export function listChildren(householdId: string): Child[] {
+  return getDB().children.filter((c) => c.householdId === householdId);
+}
+
+export function addChild(householdId: string, input: { name: string; yearGroup?: string; passportExpiry?: string }): Child {
+  const child: Child = { id: id('child'), householdId, name: input.name, yearGroup: input.yearGroup, passportExpiry: input.passportExpiry, createdAt: iso() };
+  getDB().children.push(child);
+  logProcessing(
+    householdId, 'child_added', 'account', 'you',
+    `You added a child profile (${child.name})`,
+    'Associate school and travel items with your child',
+    'Consent (special-category data, minimised)',
+  );
+  return child;
+}
+
+export function removeChild(householdId: string, childId: string): boolean {
+  const db = getDB();
+  const c = db.children.find((x) => x.id === childId && x.householdId === householdId);
+  if (!c) return false;
+  db.children = db.children.filter((x) => x.id !== childId);
+  logProcessing(householdId, 'child_removed', 'account', 'you', `You removed a child profile (${c.name})`, 'Remove a child profile', 'Consent');
+  return true;
 }
 
 export function updateHousehold(id: string, patch: Partial<Household>): Household | undefined {
@@ -523,6 +657,10 @@ export function deleteHouseholdData(householdId: string): void {
   db.digests = db.digests.filter((d) => d.householdId !== householdId);
   db.actions = db.actions.filter((a) => a.householdId !== householdId);
   db.feedback = db.feedback.filter((f) => f.householdId !== householdId);
+  db.children = db.children.filter((c) => c.householdId !== householdId);
+  // Remove invited/co-parent/teen members; keep the owner so their session
+  // survives into an empty account.
+  db.members = db.members.filter((m) => m.householdId !== householdId || m.role === 'owner');
   logProcessing(
     householdId,
     'data_deleted',

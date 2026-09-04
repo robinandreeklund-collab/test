@@ -34,8 +34,11 @@ export default function Done() {
       <Link href="/app/digest" className="btn btn-primary" style={{ marginTop: 18 }}>
         Preview today&apos;s digest
       </Link>
-      <Link href="/app" className="btn btn-ghost" style={{ marginTop: 10 }}>
-        Go to home
+      <Link href="/app/family" className="btn btn-ghost" style={{ marginTop: 10 }}>
+        👪 Add your family
+      </Link>
+      <Link href="/app" className="link small" style={{ marginTop: 12, display: 'inline-block' }}>
+        Skip to home
       </Link>
     </div>
   );

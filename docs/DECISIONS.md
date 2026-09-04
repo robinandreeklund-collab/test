@@ -63,6 +63,15 @@ inference; `ANTHROPIC_REGION=eu` is the documented default, and Render deploys t
   record of everything done with the user's data — the data flow, never the
   content. Doubles as the GDPR record of processing and makes the EU-inference
   question visible rather than hidden. See `docs/DATA_TRUST.md`.
+- **Family accounts** (`/app/family`): the household is the shared unit; auth
+  moved from household to **member**. Three login roles — owner (manages
+  members), adult/co-parent (can approve + manage bills), teen (limited view:
+  no finances, no approvals, enforced server-side). Younger **children** are
+  profiles with no login, for school/passport association. Invites are share
+  links (`/join/<token>`; emailed in production). Adding a person is a
+  data-governance event and is written to the trust log; children's details are
+  treated as special-category data — minimal, never shared with other families,
+  erased on request.
 
 ## Still open (flagged, not silently dropped)
 
