@@ -204,7 +204,7 @@ function ItemCard({
           )}
 
           {item.status === 'approved' && (
-            <div className="banner ok" style={{ marginTop: 10 }}>
+            <div className="banner ok pop-in" style={{ marginTop: 10 }}>
               ✓ {item.executable ? 'Switch queued — GiGi is on it.' : 'Approved.'}
             </div>
           )}

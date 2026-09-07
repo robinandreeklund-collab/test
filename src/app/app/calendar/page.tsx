@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { trackClient } from '@/lib/analytics';
 import CommandBar from '@/components/CommandBar';
 import ScreenHeader from '@/components/ScreenHeader';
+import { SkeletonScreen } from '@/components/Skeleton';
 import type { CalendarEvent } from '@/lib/types';
 
 const CAT_COLOR: Record<string, string> = {
@@ -16,12 +17,14 @@ export default function Calendar() {
   const [adding, setAdding] = useState(false);
   const [toast, setToast] = useState('');
   const [canManage, setCanManage] = useState(true);
+  const [loaded, setLoaded] = useState(false);
 
   async function load() {
     const [j, me] = await Promise.all([
       fetch('/api/calendar').then((r) => r.json()),
       fetch('/api/auth/me').then((r) => r.json()).catch(() => null),
     ]);
+    setLoaded(true);
     setEvents(j.events ?? []);
     setSub(j.subscribe ?? null);
     setCanManage((me?.capabilities ?? []).includes('viewFinances'));
@@ -45,6 +48,8 @@ export default function Calendar() {
   }
 
   const groups = groupByDay(events);
+
+  if (!loaded) return <SkeletonScreen />;
 
   return (
     <div className="screen">

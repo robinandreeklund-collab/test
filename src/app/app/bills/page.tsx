@@ -8,6 +8,7 @@ import ForwardTester from '@/components/ForwardTester';
 import CommandBar from '@/components/CommandBar';
 import ScreenHeader from '@/components/ScreenHeader';
 import CountUp from '@/components/CountUp';
+import { SkeletonScreen } from '@/components/Skeleton';
 import type { Bill, Currency, Digest, DigestItem } from '@/lib/types';
 
 export default function BillsRegister() {
@@ -19,9 +20,11 @@ export default function BillsRegister() {
   const [adding, setAdding] = useState(false);
   const [forwarding, setForwarding] = useState(false);
   const [toast, setToast] = useState('');
+  const [loaded, setLoaded] = useState(false);
 
   async function load() {
     const j = await fetch('/api/bills').then((r) => r.json());
+    setLoaded(true);
     setBills(j.bills ?? []);
     setCurrency(j.currency ?? 'GBP');
     setMonthlyTotal(j.monthlyTotal ?? 0);
@@ -52,6 +55,8 @@ export default function BillsRegister() {
   }
 
   const renewalsSoon = bills.filter((b) => b.confirmed && b.renewalDate).length;
+
+  if (!loaded) return <SkeletonScreen />;
 
   return (
     <div className="screen">

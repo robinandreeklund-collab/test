@@ -614,3 +614,14 @@ a.card:active, button.card:active { transform: translateY(0) scale(0.995); }
 .side-nav a .glyph { width: 22px; }
 .cmd-mic svg { color: #fff; }
 .view-toggle button { display: inline-flex; align-items: center; gap: 5px; }
+
+/* Tab-bar active indicator — a soft pill behind the active icon. */
+.tabbar a .glyph { position: relative; padding: 5px 12px; border-radius: 999px; transition: background var(--dur) var(--ease-out); }
+.tabbar a.active .glyph { background: var(--brand-soft); }
+
+/* Keyboard focus (desktop): a clear, on-brand ring — never on mouse click. */
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
+button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
+
+/* Smooth momentum scrolling inside the phone screen. */
+.screen { -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
