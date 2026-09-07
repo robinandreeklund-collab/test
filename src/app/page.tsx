@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { trackClient } from '@/lib/analytics';
+import Icon from '@/components/Icon';
 
 export default function Landing() {
   return (
@@ -154,19 +155,19 @@ function WhatWeDo() {
         <span className="hero-eyebrow">What we do</span>
         <h2>Three quiet jobs, handled every day.</h2>
         <div className="grid-3">
-          <Feature glyph="💷" title="Bills, watched" body="GiGi tracks every renewal and finds a better deal before the price creeps up. One tap and the switch is done for you." />
-          <Feature glyph="🎒" title="School, never missed" body="Forms, kit days, payments and trips — surfaced the morning they matter, pulled straight from the emails you forward." />
-          <Feature glyph="🌿" title="You always decide" body="GiGi proposes; nothing happens without your tap. Read-only by default — she can never send, delete or change a thing." />
+          <Feature icon="card" title="Bills, watched" body="GiGi tracks every renewal and finds a better deal before the price creeps up. One tap and the switch is done for you." />
+          <Feature icon="users" title="School, never missed" body="Forms, kit days, payments and trips — surfaced the morning they matter, pulled straight from the emails you forward." />
+          <Feature icon="check" title="You always decide" body="GiGi proposes; nothing happens without your tap. Read-only by default — she can never send, delete or change a thing." />
         </div>
       </div>
     </section>
   );
 }
 
-function Feature({ glyph, title, body }: { glyph: string; title: string; body: string }) {
+function Feature({ icon, title, body }: { icon: string; title: string; body: string }) {
   return (
     <div className="feature-card">
-      <div className="glyph">{glyph}</div>
+      <div style={{ color: 'var(--brand)', marginBottom: 4 }}><Icon name={icon} size={24} /></div>
       <h3>{title}</h3>
       <p style={{ margin: 0 }}>{body}</p>
     </div>

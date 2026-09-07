@@ -434,3 +434,183 @@ textarea { min-height: 92px; resize: vertical; }
 .tl-item { position: relative; margin-bottom: 14px; }
 .tl-dot { position: absolute; left: -22px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--brand); border: 2px solid var(--surface); }
 .tl-time { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 0.04em; }
+
+/* =========================================================================
+   MOTION SYSTEM — smooth entrances, micro-interactions, spring-ish easing.
+   Everything degrades to instant under prefers-reduced-motion.
+   ========================================================================= */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 140ms;
+  --dur: 240ms;
+  --dur-slow: 420ms;
+}
+
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+@keyframes popIn { 0% { opacity: 0; transform: scale(0.9); } 60% { transform: scale(1.03); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes slideOutRight { to { opacity: 0; transform: translateX(40px); height: 0; margin: 0; padding: 0; } }
+@keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+@keyframes pulseRing {
+  0% { box-shadow: 0 0 0 0 rgba(196, 87, 59, 0.45); }
+  70% { box-shadow: 0 0 0 12px rgba(196, 87, 59, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(196, 87, 59, 0); }
+}
+@keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+/* Page-enter: the .screen content rises in, with a gentle stagger per block. */
+.screen > * { animation: fadeInUp var(--dur) var(--ease-out) both; }
+.screen > *:nth-child(1) { animation-delay: 0ms; }
+.screen > *:nth-child(2) { animation-delay: 40ms; }
+.screen > *:nth-child(3) { animation-delay: 80ms; }
+.screen > *:nth-child(4) { animation-delay: 120ms; }
+.screen > *:nth-child(5) { animation-delay: 160ms; }
+.screen > *:nth-child(6) { animation-delay: 190ms; }
+.screen > *:nth-child(7) { animation-delay: 215ms; }
+.screen > *:nth-child(8) { animation-delay: 235ms; }
+.screen > *:nth-child(n+9) { animation-delay: 250ms; }
+/* Fixed overlays inside a screen shouldn't fly in. */
+.screen > .toast { animation: rise var(--dur) var(--ease-spring); }
+
+/* Cards inside a .stack cascade in too (used within a screen block). */
+.stack.reveal > * { animation: fadeInUp var(--dur) var(--ease-out) both; }
+.stack.reveal > *:nth-child(2) { animation-delay: 50ms; }
+.stack.reveal > *:nth-child(3) { animation-delay: 100ms; }
+.stack.reveal > *:nth-child(4) { animation-delay: 150ms; }
+.stack.reveal > *:nth-child(n+5) { animation-delay: 190ms; }
+
+/* Micro-interactions ------------------------------------------------------- */
+.card { transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out); }
+a.card:hover, button.card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+a.card:active, button.card:active { transform: translateY(0) scale(0.995); }
+
+.btn { transition: transform var(--dur-fast) var(--ease-out), background var(--dur) ease, box-shadow var(--dur) ease, opacity var(--dur) ease; }
+.btn:not(:disabled):active { transform: scale(0.97); }
+.btn:not(:disabled):hover { box-shadow: 0 4px 14px rgba(28,27,25,0.12); }
+
+.choice { transition: transform var(--dur-fast) var(--ease-out), background var(--dur) ease, border-color var(--dur) ease, color var(--dur) ease; }
+.choice:active { transform: scale(0.96); }
+.choice.selected { animation: popIn var(--dur) var(--ease-spring); }
+
+.pill { transition: background var(--dur) ease, color var(--dur) ease, transform var(--dur-fast) var(--ease-out); }
+
+/* Item resolve (approve/dismiss/done) — slide + collapse out. */
+.resolving { animation: slideOutRight var(--dur-slow) var(--ease-out) forwards; overflow: hidden; }
+
+/* Reply card / banners popping in. */
+.pop-in { animation: scaleIn var(--dur) var(--ease-out) both; }
+
+/* Command-bar mic while listening. */
+.cmd-mic.listening { animation: pulseRing 1.6s var(--ease-out) infinite; }
+
+/* Tab bar: animated active state. */
+.tabbar a { transition: color var(--dur) ease; }
+.tabbar a .glyph { transition: transform var(--dur) var(--ease-spring); display: inline-block; }
+.tabbar a.active .glyph { transform: translateY(-2px) scale(1.14); }
+
+/* Avatar / header subtle. */
+.avatar-btn { transition: transform var(--dur-fast) var(--ease-out); }
+.avatar-btn:active { transform: scale(0.92); }
+
+/* Skeleton loading (replaces "Loading…" text). */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, #ece5da 37%, var(--surface-2) 63%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: var(--radius-sm);
+}
+.sk-line { height: 12px; margin: 8px 0; }
+.sk-card { height: 84px; border-radius: var(--radius); margin-bottom: 12px; }
+
+/* Progress bar fill animates. */
+.bar-fill { transition: width var(--dur-slow) var(--ease-out); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .screen > * { animation: none !important; }
+}
+
+/* Page cross-fade wrapper (template.tsx). It must fill the phone column so the
+   inner .screen can flex+scroll — but .screen itself stays block flow, or its
+   cards would flex-shrink and collapse. */
+.page-enter { animation: fadeIn var(--dur) var(--ease-out) both; display: flex; flex-direction: column; flex: 1; min-height: 0; }
+
+/* =========================================================================
+   DESKTOP SHELL — sidebar layout for wide screens, with a view toggle so the
+   user can switch between the desktop experience and the mobile-app frame.
+   ========================================================================= */
+.deskshell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 264px 1fr;
+  background:
+    radial-gradient(1000px 700px at 12% -10%, #fff7ee 0%, var(--paper) 55%);
+}
+.sidebar {
+  position: sticky; top: 0; height: 100dvh;
+  display: flex; flex-direction: column;
+  padding: 26px 18px;
+  border-right: 1px solid var(--border);
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(8px);
+}
+.sidebar .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 22px; }
+.side-nav { display: flex; flex-direction: column; gap: 4px; }
+.side-nav a {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 12px; border-radius: 12px;
+  font-size: 15px; font-weight: 600; color: var(--ink-soft);
+  transition: background var(--dur) ease, color var(--dur) ease, transform var(--dur-fast) var(--ease-out);
+}
+.side-nav a .glyph { font-size: 18px; width: 22px; text-align: center; }
+.side-nav a:hover { background: var(--surface-2); color: var(--ink); }
+.side-nav a.active { background: var(--brand-soft); color: var(--brand-ink); }
+.side-nav a:active { transform: scale(0.98); }
+.sidebar .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding-top: 16px; }
+
+.deskmain { min-width: 0; padding: 0 clamp(20px, 4vw, 56px); }
+.deskmain .page-enter, .deskmain .screen {
+  display: block; flex: none; min-height: 0;
+}
+.deskmain .screen {
+  max-width: 780px; margin: 0 auto;
+  height: auto; overflow: visible;
+  padding: 34px 0 64px;
+}
+/* On desktop the command bar and headers get a touch more room. */
+.deskmain .cmdbar { max-width: 620px; }
+
+/* Segmented view toggle (desktop ⟷ mobile). */
+.view-toggle {
+  display: inline-flex; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 999px; padding: 3px; gap: 2px;
+}
+.view-toggle button {
+  border: none; background: transparent; cursor: pointer;
+  padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  color: var(--muted); transition: background var(--dur) ease, color var(--dur) ease;
+}
+.view-toggle button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
+
+/* Floating toggle shown over the phone frame on wide screens in mobile view. */
+.float-toggle {
+  position: fixed; top: 18px; right: 18px; z-index: 50;
+}
+@media (max-width: 899px) { .float-toggle { display: none; } }
+
+/* Two-up grid available to desktop screens that want it. */
+.deskmain .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 620px) { .deskmain .grid-2 { grid-template-columns: 1fr; } }
+
+/* Icon glyph wrappers align the SVG cleanly. */
+.glyph { display: inline-flex; align-items: center; justify-content: center; }
+.side-nav a .glyph { width: 22px; }
+.cmd-mic svg { color: #fff; }
+.view-toggle button { display: inline-flex; align-items: center; gap: 5px; }

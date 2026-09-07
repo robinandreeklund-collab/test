@@ -52,7 +52,7 @@ export default function KidsTravel() {
 
       {passportAlerts.map((a) => (
         <div key={a.child} className="banner" style={{ background: '#f7e7ea', color: '#8a2c46', border: '1px solid #eccdd5', marginBottom: 12 }}>
-          <strong>✈️ {a.child}&apos;s passport expires {monthName(a.date)}.</strong>
+          <strong>{a.child}&apos;s passport expires {monthName(a.date)}.</strong>
           <div className="small" style={{ color: 'inherit', marginTop: 2 }}>
             Renew in good time to avoid delays before any trip.
           </div>

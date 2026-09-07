@@ -56,7 +56,7 @@ export default function Settings() {
           </div>
         </div>
         <Link href="/app/family" className="btn btn-subtle btn-sm" style={{ width: '100%' }}>
-          👪 Family &amp; members →
+          Family &amp; members →
         </Link>
         {me?.isDemo ? (
           <Link href="/signup" className="btn btn-primary btn-sm" style={{ width: '100%' }}>
@@ -137,7 +137,7 @@ export default function Settings() {
           style={{ width: '100%' }}
           onClick={async () => { await fetch('/api/digest/generate', { method: 'POST' }); trackClient('nightly_run_simulated', { where: 'settings' }); showToast('Reran tonight’s digest.'); }}
         >
-          ↻ Simulate tonight&apos;s 2am run
+          Simulate tonight&apos;s 2am run
         </button>
         <Link href="/app/metrics" className="link small">Founder metrics →</Link>
         <Link href="/app/eval" className="link small">Extraction eval →</Link>
@@ -146,7 +146,7 @@ export default function Settings() {
       <section className="card stack">
         <h3>Privacy &amp; data</h3>
         <Link href="/app/data" className="btn btn-subtle btn-sm" style={{ width: '100%' }}>
-          🔎 See everything GiGi did with your data →
+          See everything GiGi did with your data →
         </Link>
         <Link href="/privacy" className="link small">Privacy policy →</Link>
         <p className="tiny muted" style={{ margin: 0 }}>UK &amp; EU data only. No user content in logs.</p>

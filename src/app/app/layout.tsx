@@ -1,11 +1,5 @@
-import TabBar from '@/components/TabBar';
-import PhoneFrame from '@/components/PhoneFrame';
+import AppShell from '@/components/AppShell';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <PhoneFrame>
-      {children}
-      <TabBar />
-    </PhoneFrame>
-  );
+  return <AppShell>{children}</AppShell>;
 }

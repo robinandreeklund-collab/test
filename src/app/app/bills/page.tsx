@@ -7,6 +7,7 @@ import { AddBill } from '@/components/AddBill';
 import ForwardTester from '@/components/ForwardTester';
 import CommandBar from '@/components/CommandBar';
 import ScreenHeader from '@/components/ScreenHeader';
+import CountUp from '@/components/CountUp';
 import type { Bill, Currency, Digest, DigestItem } from '@/lib/types';
 
 export default function BillsRegister() {
@@ -62,12 +63,12 @@ export default function BillsRegister() {
         <div className="row between" style={{ alignItems: 'flex-start' }}>
           <div>
             <p className="eyebrow" style={{ color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>Monthly bills tracked</p>
-            <div style={{ fontSize: 26, fontWeight: 700 }}>{formatMoney(monthlyTotal, currency)}</div>
+            <div style={{ fontSize: 26, fontWeight: 700 }}><CountUp value={monthlyTotal} format={(n) => formatMoney(Math.round(n), currency)} /></div>
             <span className="tiny" style={{ color: 'rgba(255,255,255,0.6)' }}>{bills.filter((b) => b.confirmed).length} contracts monitored</span>
           </div>
           {value && (
             <span className="pill" style={{ background: 'var(--brand)', color: '#fff' }}>
-              {formatMoney(value.savedAnnual, currency)} saved
+              <CountUp value={value.savedAnnual} format={(n) => formatMoney(Math.round(n), currency)} /> saved
             </span>
           )}
         </div>
@@ -148,7 +149,7 @@ export default function BillsRegister() {
         </div>
       ) : (
         <button className="btn btn-ghost" style={{ marginTop: 10 }} onClick={() => { setForwarding(true); trackClient('forward_tester_opened', { where: 'register' }); }}>
-          ✉ Forward a bill to GiGi
+          Forward a bill to GiGi
         </button>
       )}
 

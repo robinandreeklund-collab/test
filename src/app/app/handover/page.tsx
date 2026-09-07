@@ -95,7 +95,7 @@ function CatCard({ c, busy, onToggle }: { c: Cat; busy: boolean; onToggle: () =>
         >{c.live ? '✓' : ''}</span>
         <div className="grow">
           <div className="row between">
-            <h3 style={{ margin: 0 }}>{c.icon} {c.title}</h3>
+            <h3 style={{ margin: 0 }}>{c.title}</h3>
             {c.live && <span className="pill brand" style={{ fontSize: 10 }}>LIVE</span>}
           </div>
           <p className="small" style={{ margin: '4px 0 0' }}>{c.blurb}</p>

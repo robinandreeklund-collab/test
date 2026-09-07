@@ -6,6 +6,8 @@ import { trackClient } from '@/lib/analytics';
 import { formatMoney } from '@/lib/money';
 import CommandBar from '@/components/CommandBar';
 import ScreenHeader from '@/components/ScreenHeader';
+import CountUp from '@/components/CountUp';
+import { SkeletonScreen } from '@/components/Skeleton';
 import type { Currency, Digest, DigestItem, Household } from '@/lib/types';
 
 export default function DigestScreen() {
@@ -53,7 +55,7 @@ export default function DigestScreen() {
   }
 
   if (!digest || !household) {
-    return <div className="screen"><p className="muted">Loading your digest…</p></div>;
+    return <SkeletonScreen />;
   }
 
   const greeting = timeGreeting();
@@ -93,16 +95,15 @@ export default function DigestScreen() {
             <span className="tiny muted">since you joined</span>
           </div>
           <div className="row" style={{ gap: 8, marginBottom: 16 }}>
-            <div className="mini-stat"><b>{formatMoney(value.savedAnnual, value.currency)}</b><span>money saved</span></div>
-            <div className="mini-stat"><b>{value.handled}</b><span>tasks managed</span></div>
-            <div className="mini-stat"><b>{Math.max(1, Math.round(value.handled * 0.4))} hrs</b><span>time saved</span></div>
+            <div className="mini-stat"><b><CountUp value={value.savedAnnual} format={(n) => formatMoney(Math.round(n), value.currency)} /></b><span>money saved</span></div>
+            <div className="mini-stat"><b><CountUp value={value.handled} /></b><span>tasks managed</span></div>
+            <div className="mini-stat"><b><CountUp value={Math.max(1, Math.round(value.handled * 0.4))} /> hrs</b><span>time saved</span></div>
           </div>
         </>
       )}
 
       {digest.items.length === 0 && (
         <div className="card center stack" style={{ marginTop: 6 }}>
-          <div style={{ fontSize: 30 }}>☕️</div>
           <h3>{digest.quietLine ?? 'All calm today.'}</h3>
           <p className="small" style={{ margin: 0 }}>
             No noise on the quiet days. We&apos;ll be back the moment something needs you.

@@ -55,7 +55,7 @@ export default function Calendar() {
       {sub && (
         <div className="card stack" style={{ borderColor: 'var(--brand)' }}>
           <div className="row between">
-            <h3 style={{ margin: 0 }}>📆 Sync to your phone</h3>
+            <h3 style={{ margin: 0 }}>Sync to your phone</h3>
             <span className="pill brand">Read-only</span>
           </div>
           <p className="small" style={{ margin: 0 }}>

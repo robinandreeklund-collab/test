@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { trackClient } from '@/lib/analytics';
+import Icon from './Icon';
 
 // The ambient command bar — "What can I help with today?" — embedded at the top
 // of the main screens. Voice and text are one input, and GiGi answers INLINE
@@ -84,13 +85,13 @@ export default function CommandBar() {
     <div style={{ marginBottom: 14 }}>
       <div className="cmdbar">
         <button
-          className="cmd-mic"
+          className={`cmd-mic${listening ? ' listening' : ''}`}
           aria-label={listening ? 'Stop listening' : 'Talk to GiGi'}
           onClick={toggleMic}
           disabled={!supported}
           style={{ background: listening ? 'var(--today)' : 'var(--brand)' }}
         >
-          🎙
+          <Icon name="mic" size={18} strokeWidth={1.8} />
         </button>
         <input
           value={value}
@@ -105,7 +106,7 @@ export default function CommandBar() {
       </div>
 
       {(busy || reply) && (
-        <div className="card" style={{ marginTop: 8, borderColor: 'var(--brand)' }}>
+        <div className="card pop-in" style={{ marginTop: 8, borderColor: 'var(--brand)' }}>
           {asked && <p className="tiny muted" style={{ margin: 0 }}>“{asked}”</p>}
           <p style={{ margin: '4px 0 0' }}>{busy ? '…' : reply}</p>
           {reply && !busy && (

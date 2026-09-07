@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import PhoneFrame from '@/components/PhoneFrame';
+import Icon from '@/components/Icon';
 import { trackClient } from '@/lib/analytics';
 
 export default function Signup() {
@@ -40,7 +41,7 @@ export default function Signup() {
       <PhoneFrame>
         <div className="screen">
           <div className="center" style={{ marginBottom: 20, marginTop: 12 }}>
-            <div style={{ fontSize: 34 }}>🔑</div>
+            <div style={{ color: 'var(--brand)' }}><Icon name="lock" size={30} /></div>
             <h1 style={{ marginTop: 10 }}>Save your recovery code</h1>
             <p className="small" style={{ margin: 0 }}>
               {emailless

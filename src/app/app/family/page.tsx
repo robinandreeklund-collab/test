@@ -112,7 +112,7 @@ export default function Family() {
       {canManage && <AddChild onDone={load} />}
 
       <div className="banner ok" style={{ marginTop: 18 }}>
-        🔒 Children&apos;s details are special-category data: kept minimal, never shared with other
+        Children&apos;s details are special-category data: kept minimal, never shared with other
         families, and erased with one tap. Every change is in your <Link href="/app/data" className="link" style={{ color: 'inherit' }}>data log</Link>.
       </div>
 

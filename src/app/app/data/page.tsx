@@ -47,7 +47,7 @@ export default function DataTrust() {
       {integrity && (
         <div className={`banner ${integrity.ok ? 'ok' : 'warn'}`} style={{ marginBottom: 14 }}>
           {integrity.ok
-            ? `🔒 Append-only log · ${integrity.count} events · verified unaltered`
+            ? `Append-only log · ${integrity.count} events · verified unaltered`
             : '⚠ Log integrity check failed'}
         </div>
       )}

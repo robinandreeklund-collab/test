@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import PhoneFrame from '@/components/PhoneFrame';
+import Icon from '@/components/Icon';
 import { trackClient } from '@/lib/analytics';
 
 export default function Join({ params }: { params: { token: string } }) {
@@ -45,7 +46,7 @@ export default function Join({ params }: { params: { token: string } }) {
     return (
       <PhoneFrame>
         <div className="screen center">
-          <div style={{ fontSize: 34, marginTop: 12 }}>🔑</div>
+          <div style={{ color: 'var(--brand)', marginTop: 12 }}><Icon name="lock" size={30} /></div>
           <h1 style={{ marginTop: 10 }}>Save your recovery code</h1>
           <p className="small">Keeps you able to get back in if you lose your password.</p>
           <div className="card center"><code style={{ fontSize: 20, fontWeight: 700, letterSpacing: '0.04em' }}>{recovery}</code></div>

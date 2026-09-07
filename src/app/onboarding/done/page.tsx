@@ -18,7 +18,6 @@ export default function Done() {
   return (
     <div className="screen center">
       <Progress step={4} />
-      <div style={{ fontSize: 44, marginTop: 12 }}>🌿</div>
       <h1>GiGi is running, {name}.</h1>
       <p>
         We&apos;re watching {count} bill{count === 1 ? '' : 's'} and your household admin. From here,
@@ -35,7 +34,7 @@ export default function Done() {
         Preview today&apos;s digest
       </Link>
       <Link href="/app/family" className="btn btn-ghost" style={{ marginTop: 10 }}>
-        👪 Add your family
+        Add your family
       </Link>
       <Link href="/app" className="link small" style={{ marginTop: 12, display: 'inline-block' }}>
         Skip to home
