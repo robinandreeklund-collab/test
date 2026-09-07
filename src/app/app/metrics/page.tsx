@@ -30,6 +30,14 @@ export default function Metrics() {
         <Stat label="Feedback" value={feedback?.feedback.length ?? 0} sub="reports" />
       </div>
 
+      <Link href="/app/eval" className="card row between" style={{ marginTop: 12, textDecoration: 'none' }}>
+        <div>
+          <h3 style={{ marginBottom: 2 }}>Extraction eval →</h3>
+          <span className="small muted">How well Claude reads bill emails (precision/recall)</span>
+        </div>
+        <span className="pill">Run</span>
+      </Link>
+
       <div className="card" style={{ marginTop: 12 }}>
         <h3>Event counts</h3>
         <div className="stack" style={{ marginTop: 8 }}>

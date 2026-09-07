@@ -125,7 +125,15 @@ export default function Home() {
         Demo control — reruns the nightly digest job for your household.
       </p>
 
-      <Link href="/app/data" className="card row between" style={{ marginTop: 18, textDecoration: 'none' }}>
+      <Link href="/app/voice" className="card row between" style={{ marginTop: 12, textDecoration: 'none' }}>
+        <div>
+          <h3 style={{ marginBottom: 2 }}>🎙 Talk to GiGi</h3>
+          <span className="small muted">Ask about your day, out loud</span>
+        </div>
+        <span className="pill">Open →</span>
+      </Link>
+
+      <Link href="/app/data" className="card row between" style={{ marginTop: 12, textDecoration: 'none' }}>
         <div>
           <h3 style={{ marginBottom: 2 }}>🔒 Your data, fully transparent</h3>
           <span className="small muted">See exactly what GiGi did with your data</span>

@@ -6,6 +6,7 @@
 // strict-JSON, null-over-guessing contract.
 
 import type { BillType, Currency } from './types';
+import { claudeText, EXTRACTION_MODEL } from './anthropic';
 
 export interface ExtractedBill {
   kind: 'bill';
@@ -185,30 +186,13 @@ Shape: {"kind":"bill","provider":string|null,"type":string|null,"amount":number|
 
 // Real model extraction (Prompt 1). Only used when ANTHROPIC_API_KEY is set.
 async function anthropicExtract(email: RawEmail): Promise<ExtractedBill> {
-  // Lazy import so the app has zero hard dependency on the SDK at boot.
-  const Anthropic = (await import('@anthropic-ai/sdk')).default;
-  const client = new Anthropic();
-  const region = process.env.ANTHROPIC_REGION || 'eu';
-
-  // Built loosely so the newer top-level `inference_geo` param compiles across
-  // SDK versions; keeps inference in-region to honour "EU data only".
-  const params: Record<string, unknown> = {
-    model: 'claude-sonnet-5',
-    max_tokens: 1024,
-    inference_geo: region,
+  const { text: raw } = await claudeText({
+    model: EXTRACTION_MODEL,
+    maxTokens: 1024,
     system: EXTRACTION_SYSTEM,
-    messages: [
-      {
-        role: 'user',
-        content: redactPII(`From: ${email.from ?? ''}\nSubject: ${email.subject ?? ''}\n\n${email.text ?? ''}`),
-      },
-    ],
-  };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const res: any = await client.messages.create(params as any);
-
-  const textBlock = (res.content as Array<{ type: string; text?: string }>).find((b) => b.type === 'text');
-  const raw = textBlock?.text ?? '';
+    // PII stripped before it ever leaves for inference.
+    user: redactPII(`From: ${email.from ?? ''}\nSubject: ${email.subject ?? ''}\n\n${email.text ?? ''}`),
+  });
   const json = raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1);
   const parsed = JSON.parse(json);
   return {

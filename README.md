@@ -109,6 +109,7 @@ render.yaml               Render blueprint
 - [`docs/FORWARDING.md`](docs/FORWARDING.md) — **how to try the forward feature** (in-app tester with zero setup; real email via Postmark/Cloudflare on free Render; optional AI extraction).
 - [`docs/DATA_TRUST.md`](docs/DATA_TRUST.md) — **the trust log**: a per-household, plain-language, hash-chained record of everything done with the user's data (`/app/data`), doubling as the GDPR record of processing.
 - [`docs/PRIVACY_ARCHITECTURE.md`](docs/PRIVACY_ARCHITECTURE.md) — **pseudonymity by design**: identity/content split (opaque `subjectId` + identity vault), opaque sessions with no tracking cookies, strict CSP, PII-stripping before AI, and email-free accounts with recovery codes.
+- [`docs/AI_FEATURES.md`](docs/AI_FEATURES.md) — **turning on Claude**: real bill extraction, the extraction **eval** (precision/recall vs the 95% gate at `/app/eval`), and the **voice assistant** (`/app/voice`, read/answer only — never executes). All enabled by `ANTHROPIC_API_KEY`.
 - [`db/schema.sql`](db/schema.sql) — the production schema.
 - [`CLAUDE.md`](CLAUDE.md) — extraction + digest prompt contracts.
 
