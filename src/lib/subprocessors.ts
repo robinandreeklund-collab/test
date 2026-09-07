@@ -45,5 +45,13 @@ export function subprocessors(): Subprocessor[] {
       active: true,
       note: 'Nothing is shared until you tap approve',
     },
+    {
+      name: 'Your calendar provider',
+      role: 'Fetches your GiGi calendar feed if you subscribe',
+      region: 'Depends on your provider (e.g. Apple, Google)',
+      data: 'The events you choose to sync',
+      active: true,
+      note: 'Only if you subscribe — reset the link any time to revoke it',
+    },
   ];
 }

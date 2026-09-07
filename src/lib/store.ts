@@ -12,6 +12,7 @@ import type {
   ActionLog,
   AnalyticsEvent,
   Bill,
+  CalendarEvent,
   Child,
   Digest,
   Feedback,
@@ -34,6 +35,7 @@ interface DB {
   identities: Identity[]; // vault — strong identifiers, kept apart from content
   sessions: Session[]; // opaque session tokens
   children: Child[];
+  calendarEvents: CalendarEvent[];
   bills: Bill[];
   digests: Digest[];
   actions: ActionLog[];
@@ -77,6 +79,7 @@ function seed(): DB {
     digestTime: '07:00',
     digestPaused: false,
     handedOver: [...DEFAULT_HANDED_OVER],
+    calendarToken: 'cal_demo_' + Math.random().toString(36).slice(2, 12),
     createdAt: iso(-40),
   };
 
@@ -168,6 +171,11 @@ function seed(): DB {
     sessions: [],
     children: [
       { id: 'child_demo', householdId, name: 'Ella', yearGroup: 'Year 4', passportExpiry: isoDate(300), createdAt: iso(-40) },
+    ],
+    calendarEvents: [
+      { id: 'cal_seed1', householdId, summary: 'Parents’ evening — St Mary’s', category: 'school', start: isoDate(5), allDay: true, source: 'manual', alarmMinutesBefore: 24 * 60, createdAt: iso(-10) },
+      { id: 'cal_seed2', householdId, summary: 'Dentist — Ella', category: 'appointment', start: iso(9).slice(0, 16) + ':00', end: iso(9).slice(0, 11) + '10:00:00', allDay: false, tzid: 'Europe/London', source: 'manual', createdAt: iso(-6) },
+      { id: 'cal_seed3', householdId, summary: 'Half-term break', category: 'school', start: isoDate(20), end: isoDate(25), allDay: true, source: 'manual', createdAt: iso(-6) },
     ],
     bills,
     digests: [],
@@ -312,6 +320,7 @@ export function createHousehold(input: {
     digestTime: '07:00',
     digestPaused: false,
     handedOver: [...DEFAULT_HANDED_OVER],
+    calendarToken: 'cal_' + id('t') + id('k'),
     createdAt: iso(),
   };
   db.households.push(household);
@@ -504,6 +513,50 @@ export function removeMember(householdId: string, memberId: string): boolean {
     'Consent',
   );
   return true;
+}
+
+// --- Calendar -----------------------------------------------------------------
+
+export function listManualEvents(householdId: string): CalendarEvent[] {
+  return getDB().calendarEvents.filter((e) => e.householdId === householdId);
+}
+
+export function addCalendarEvent(input: Omit<CalendarEvent, 'id' | 'createdAt' | 'source'>): CalendarEvent {
+  const ev: CalendarEvent = { ...input, id: 'cal_' + id('e'), source: 'manual', createdAt: iso() };
+  getDB().calendarEvents.push(ev);
+  return ev;
+}
+
+export function deleteCalendarEvent(householdId: string, eventId: string): boolean {
+  const db = getDB();
+  const before = db.calendarEvents.length;
+  db.calendarEvents = db.calendarEvents.filter((e) => !(e.id === eventId && e.householdId === householdId));
+  return db.calendarEvents.length < before;
+}
+
+export function getHouseholdByCalendarToken(token: string): Household | undefined {
+  if (!token) return undefined;
+  return getDB().households.find((h) => h.calendarToken === token);
+}
+
+export function calendarToken(householdId: string): string {
+  const h = getHouseholdById(householdId);
+  if (!h) return '';
+  if (!h.calendarToken) h.calendarToken = 'cal_' + id('t') + id('k');
+  return h.calendarToken;
+}
+
+export function rotateCalendarToken(householdId: string): string {
+  const h = getHouseholdById(householdId);
+  if (!h) return '';
+  h.calendarToken = 'cal_' + id('t') + id('k');
+  logProcessing(
+    householdId, 'calendar_shared', 'account', 'you',
+    'You revoked the old calendar link and created a new one',
+    'Stop the previous subscription from receiving your events',
+    'Consent',
+  );
+  return h.calendarToken;
 }
 
 // --- Hand over (delegated categories) ----------------------------------------

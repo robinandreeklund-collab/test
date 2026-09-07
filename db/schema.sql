@@ -60,6 +60,29 @@ create table children (
 );
 create index on children (household_id);
 
+-- --- Calendar events (iCalendar-compatible) ---------------------------------
+create table calendar_events (
+  id                   text primary key,       -- also the iCal UID
+  household_id         uuid not null references households(id) on delete cascade,
+  summary              text not null,
+  description          text,
+  location             text,
+  category             text not null default 'other'
+                         check (category in ('school','travel','bill','appointment','other')),
+  start_at             text not null,          -- 'YYYY-MM-DD' (all-day) or ISO datetime
+  end_at               text,
+  all_day              boolean not null default true,
+  tzid                 text,
+  rrule                text,                   -- recurrence (reserved)
+  alarm_minutes_before int,
+  source               text not null default 'manual' check (source in ('manual','derived')),
+  related_child_id     uuid references children(id) on delete set null,
+  created_at           timestamptz not null default now()
+);
+create index on calendar_events (household_id);
+-- households.calendar_token holds the secret, revocable ICS-feed token:
+alter table households add column if not exists calendar_token text unique;
+
 -- --- Bills -------------------------------------------------------------------
 create table bills (
   id                  uuid primary key default gen_random_uuid(),

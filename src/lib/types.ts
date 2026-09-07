@@ -61,6 +61,26 @@ export interface Session {
   createdAt: string;
 }
 
+// A calendar event, modelled iCalendar-compatible (RFC 5545) from day one so
+// every sync path (ICS feed, per-event .ics, native device write) is clean.
+export interface CalendarEvent {
+  id: string; // also used as the iCal UID (stable)
+  householdId: string;
+  summary: string;
+  description?: string;
+  location?: string;
+  category: 'school' | 'travel' | 'bill' | 'appointment' | 'other';
+  start: string; // 'YYYY-MM-DD' when allDay, else ISO datetime
+  end?: string;
+  allDay: boolean;
+  tzid?: string; // IANA tz for timed events
+  rrule?: string; // reserved for recurrence (e.g. 'FREQ=WEEKLY;BYDAY=TU')
+  alarmMinutesBefore?: number;
+  source: 'manual' | 'derived'; // derived = generated from bills/children
+  relatedChildId?: string;
+  createdAt: string;
+}
+
 // A child profile (no login): used to associate school emails and travel/
 // passport nudges. Sensitive data — kept minimal (see docs/DECISIONS.md, DPIA).
 export interface Child {
@@ -94,6 +114,8 @@ export interface Household {
   digestPaused: boolean;
   // Categories the user has "handed over" to GiGi to run end-to-end.
   handedOver?: string[];
+  // Secret, revocable token for the read-only ICS subscription feed.
+  calendarToken?: string;
   createdAt: string;
 }
 
@@ -205,6 +227,7 @@ export type ProcessingAction =
   | 'shared_for_execution'
   | 'connection_changed'
   | 'handover_changed'
+  | 'calendar_shared'
   | 'member_invited'
   | 'member_joined'
   | 'member_removed'

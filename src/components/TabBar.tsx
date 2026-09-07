@@ -6,9 +6,10 @@ import { useEffect, useState } from 'react';
 
 const ALL_TABS = [
   { href: '/app/digest', label: 'Digest', glyph: '📋', cap: null },
-  { href: '/app/kids', label: 'Kids & Travel', glyph: '🎒', cap: null },
+  { href: '/app/calendar', label: 'Calendar', glyph: '📆', cap: null },
+  { href: '/app/kids', label: 'Kids', glyph: '🎒', cap: null },
   { href: '/app/bills', label: 'Bills', glyph: '💷', cap: 'viewFinances' as const },
-  { href: '/app/handover', label: 'Hand over', glyph: '🤝', cap: 'viewFinances' as const },
+  { href: '/app/handover', label: 'Handover', glyph: '🤝', cap: 'viewFinances' as const },
 ];
 
 export default function TabBar() {
