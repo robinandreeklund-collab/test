@@ -22,21 +22,33 @@ export async function claudeText(opts: {
   const client = new Anthropic();
   const region = process.env.ANTHROPIC_REGION || 'eu';
 
-  // Built loosely so the newer top-level `inference_geo` param compiles across
-  // SDK versions.
-  const params: Record<string, unknown> = {
+  const base: Record<string, unknown> = {
     model: opts.model,
     max_tokens: opts.maxTokens ?? 1024,
-    inference_geo: region,
     system: opts.system,
     messages: [{ role: 'user', content: opts.user }],
   };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const res: any = await client.messages.create(params as any);
 
-  if (res?.stop_reason === 'refusal') {
-    throw new Error('Claude declined this request.');
+  async function call(withGeo: boolean) {
+    // `inference_geo` pins EU inference but isn't accepted on every account/SDK
+    // version. Cast loosely so it compiles; retry without it if it's rejected.
+    const params = withGeo ? { ...base, inference_geo: region } : base;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const res: any = await client.messages.create(params as any);
+    if (res?.stop_reason === 'refusal') throw new Error('Claude declined this request.');
+    const block = (res.content as Array<{ type: string; text?: string }>).find((b) => b.type === 'text');
+    return { text: block?.text ?? '', region: res?.usage?.inference_geo ?? (withGeo ? region : 'unpinned') };
   }
-  const block = (res.content as Array<{ type: string; text?: string }>).find((b) => b.type === 'text');
-  return { text: block?.text ?? '', region: res?.usage?.inference_geo ?? region };
+
+  try {
+    return await call(true);
+  } catch (e) {
+    // Fall back to a call without the geo pin (the common cause of a hard 400),
+    // so AI features work even where inference_geo isn't provisioned.
+    try {
+      return await call(false);
+    } catch {
+      throw e; // surface the original error
+    }
+  }
 }

@@ -53,8 +53,14 @@ export async function POST(req: Request) {
       user: `Context:\n${lines.join('\n')}\n\nThey said: "${message}"`,
     });
     reply = out.text.trim();
-  } catch {
-    return NextResponse.json({ configured: true, reply: 'Sorry — I could not reach my brain just now. Try again in a moment.' });
+  } catch (e) {
+    console.error('assistant call failed:', e);
+    return NextResponse.json({
+      configured: true,
+      reply: 'Sorry — I could not reach my brain just now. Try again in a moment.',
+      // Surfaced during the test phase to make failures diagnosable.
+      error: String((e as Error)?.message ?? e).slice(0, 300),
+    });
   }
 
   // Transparency: a voice question is content sent to the AI. Record it.
