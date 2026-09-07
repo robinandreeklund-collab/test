@@ -3,11 +3,16 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { trackClient } from '@/lib/analytics';
-import type { Digest, DigestItem, Household } from '@/lib/types';
+import { formatMoney } from '@/lib/money';
+import CommandBar from '@/components/CommandBar';
+import ScreenHeader from '@/components/ScreenHeader';
+import type { Currency, Digest, DigestItem, Household } from '@/lib/types';
 
 export default function DigestScreen() {
   const [digest, setDigest] = useState<Digest | null>(null);
   const [household, setHousehold] = useState<Household | null>(null);
+  const [me, setMe] = useState<{ name: string; role: string } | null>(null);
+  const [value, setValue] = useState<{ savedAnnual: number; handled: number; currency: Currency } | null>(null);
   const [toast, setToast] = useState('');
   const [showOverflow, setShowOverflow] = useState(false);
   const [feedbackFor, setFeedbackFor] = useState<DigestItem | null>(null);
@@ -16,6 +21,11 @@ export default function DigestScreen() {
     const j = await fetch(`/api/digest${open ? '?open=1' : ''}`).then((r) => r.json());
     setDigest(j.digest);
     setHousehold(j.household);
+    const meRes = await fetch('/api/auth/me').then((r) => r.json()).catch(() => null);
+    setMe(meRes?.member ?? null);
+    if ((meRes?.capabilities ?? []).includes('viewFinances')) {
+      fetch('/api/value').then((r) => r.json()).then(setValue).catch(() => {});
+    }
   }
 
   useEffect(() => {
@@ -47,18 +57,47 @@ export default function DigestScreen() {
   }
 
   const greeting = timeGreeting();
+  const name = me?.name ?? household.ownerName;
+  const openCount = digest.items.filter((i) => i.status === 'open').length;
   const openItems = digest.items.filter((i) => i.status === 'open' || i.status === 'approved');
   const allResolved = digest.items.length > 0 && digest.items.every((i) => i.status !== 'open');
 
   return (
     <div className="screen">
-      <p className="eyebrow">{formatDate(digest.date)}</p>
-      <h1>{greeting}, {household.ownerName}.</h1>
+      <ScreenHeader
+        eyebrow={`GiGi · ${weekday(digest.date)}`}
+        title={`${greeting}, ${name}`}
+        subtitle={openCount > 0 ? `${openCount} thing${openCount > 1 ? 's' : ''} need your attention today` : 'All calm today'}
+      />
 
-      {household.connectionStatus === 'degraded' && (
+      <CommandBar />
+
+      <p className="tiny muted center" style={{ margin: '0 0 12px' }}>
+        Tell me what you need, I&apos;ll handle it — <strong>you approve every step.</strong>
+      </p>
+
+      {household.connectionStatus === 'degraded' ? (
         <div className="banner warn" style={{ marginBottom: 14 }}>
           Your inbox connection dropped — some bills may be missed until you reconnect in Settings.
         </div>
+      ) : (
+        <div className="banner ok" style={{ marginBottom: 14 }}>
+          ● GiGi is running. Bills, school &amp; travel monitored around the clock.
+        </div>
+      )}
+
+      {value && (
+        <>
+          <div className="row between" style={{ margin: '2px 0 8px' }}>
+            <span className="eyebrow">Your impact</span>
+            <span className="tiny muted">since you joined</span>
+          </div>
+          <div className="row" style={{ gap: 8, marginBottom: 16 }}>
+            <div className="mini-stat"><b>{formatMoney(value.savedAnnual, value.currency)}</b><span>money saved</span></div>
+            <div className="mini-stat"><b>{value.handled}</b><span>tasks managed</span></div>
+            <div className="mini-stat"><b>{Math.max(1, Math.round(value.handled * 0.4))} hrs</b><span>time saved</span></div>
+          </div>
+        </>
       )}
 
       {digest.items.length === 0 && (
@@ -236,4 +275,8 @@ function formatDate(iso: string): string {
   return new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long',
   });
+}
+
+function weekday(iso: string): string {
+  return new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long' });
 }

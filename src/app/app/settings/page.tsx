@@ -131,6 +131,19 @@ export default function Settings() {
       </section>
 
       <section className="card stack">
+        <h3>Demo &amp; founder</h3>
+        <button
+          className="btn btn-ghost btn-sm"
+          style={{ width: '100%' }}
+          onClick={async () => { await fetch('/api/digest/generate', { method: 'POST' }); trackClient('nightly_run_simulated', { where: 'settings' }); showToast('Reran tonight’s digest.'); }}
+        >
+          ↻ Simulate tonight&apos;s 2am run
+        </button>
+        <Link href="/app/metrics" className="link small">Founder metrics →</Link>
+        <Link href="/app/eval" className="link small">Extraction eval →</Link>
+      </section>
+
+      <section className="card stack">
         <h3>Privacy &amp; data</h3>
         <Link href="/app/data" className="btn btn-subtle btn-sm" style={{ width: '100%' }}>
           🔎 See everything GiGi did with your data →

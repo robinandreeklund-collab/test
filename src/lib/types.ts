@@ -92,6 +92,8 @@ export interface Household {
   connectionStatus: ConnectionStatus;
   digestTime: string; // "07:00"
   digestPaused: boolean;
+  // Categories the user has "handed over" to GiGi to run end-to-end.
+  handedOver?: string[];
   createdAt: string;
 }
 
@@ -202,6 +204,7 @@ export type ProcessingAction =
   | 'digest_generated'
   | 'shared_for_execution'
   | 'connection_changed'
+  | 'handover_changed'
   | 'member_invited'
   | 'member_joined'
   | 'member_removed'

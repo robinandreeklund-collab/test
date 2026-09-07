@@ -26,6 +26,7 @@ import type {
   WaitlistEntry,
 } from './types';
 import { buildDigest } from './digest';
+import { DEFAULT_HANDED_OVER } from './handover';
 
 interface DB {
   households: Household[];
@@ -75,6 +76,7 @@ function seed(): DB {
     connectionStatus: 'active',
     digestTime: '07:00',
     digestPaused: false,
+    handedOver: [...DEFAULT_HANDED_OVER],
     createdAt: iso(-40),
   };
 
@@ -309,6 +311,7 @@ export function createHousehold(input: {
     connectionStatus: 'pending',
     digestTime: '07:00',
     digestPaused: false,
+    handedOver: [...DEFAULT_HANDED_OVER],
     createdAt: iso(),
   };
   db.households.push(household);
@@ -501,6 +504,28 @@ export function removeMember(householdId: string, memberId: string): boolean {
     'Consent',
   );
   return true;
+}
+
+// --- Hand over (delegated categories) ----------------------------------------
+
+export function getHandover(householdId: string): string[] {
+  const h = getHouseholdById(householdId);
+  return h?.handedOver ?? [...DEFAULT_HANDED_OVER];
+}
+
+export function setHandover(householdId: string, category: string, on: boolean): string[] {
+  const h = getHouseholdById(householdId);
+  if (!h) return [...DEFAULT_HANDED_OVER];
+  const set = new Set(h.handedOver ?? DEFAULT_HANDED_OVER);
+  if (on) set.add(category); else set.delete(category);
+  h.handedOver = [...set];
+  logProcessing(
+    householdId, 'handover_changed', 'account', 'you',
+    on ? `You handed "${category}" over to GiGi to run end-to-end` : `You took "${category}" back from GiGi`,
+    'Choose what GiGi manages for you',
+    'Consent',
+  );
+  return h.handedOver;
 }
 
 // --- Children (profiles, no login) -------------------------------------------
